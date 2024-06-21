@@ -74,50 +74,54 @@ G = np.dot(P, A1)
 print("\nMatrix G (P * A1):")
 print(G)
 
-# def QR_Decomposition(A2):
-#     n, m = A2.shape # get the shape of A
+# Define the vector x corresponding to the measured variables F1, F2, F4, F6, F7, F9, F10
+x = np.array([1, 2, 4, 6, 7, 9, 10])
 
-#     Q = np.zeros((n, n)) # initialize matrix Q
-#     u = np.zeros((n, n)) # initialize matrix u
+# Compute Gx to see the balances
+Gx = np.dot(G, x)
+print("\nGx (Balances obtained from Gx):")
+print(Gx)
 
-#     u[:, 0] = A2[:, 0]
-#     Q[:, 0] = u[:, 0] / np.linalg.norm(u[:, 0])
+# Mapping of x to F variables
+F_vars = ['F1', 'F2', 'F4', 'F6', 'F7', 'F9', 'F10']
 
-#     for i in range(1, m):
+# Interpretation of Gx
+print("\nInterpreting the balances:")
 
-#         u[:, i] = A2[:, i]
-#         for j in range(i):
-#             u[:, i] -= (A2[:, i] @ Q[:, j]) * Q[:, j] # get each u vector
+# Interpretation of Gx
+balances = []
+print("\nInterpreting the balances:")
+for i, balance in enumerate(Gx):
+    balance_terms = [f"{G[i, j]}*{F_vars[j]}" for j in range(len(F_vars)) if G[i, j] != 0]
+    balance_eq = " + ".join(balance_terms)
+    print(f"Balance {i+1}: {balance_eq} = 0")
+    balances.append(balance_terms)
 
-#         Q[:, i] = u[:, i] / np.linalg.norm(u[:, i]) # compute each e vetor
+# Summing the balances
+combined_balance_terms = {}
+for balance in balances:
+    for term in balance:
+        coef, var = term.split('*')
+        coef = float(coef)
+        if var in combined_balance_terms:
+            combined_balance_terms[var] += coef
+        else:
+            combined_balance_terms[var] = coef
 
-#     R = np.zeros((n, m))
-#     for i in range(n):
-#         for j in range(i, m):
-#             R[i, j] = A2[:, j] @ Q[:, i]
+combined_balance_eq = " + ".join(f"{coef}*{var}" for var, coef in combined_balance_terms.items() if coef != 0)
+print("\nCombined Balance Equation:")
+print(f"{combined_balance_eq} = 0")
 
-#     return Q, R
+# Identify redundant and remaining variables
+redundant_vars = [var for var, coef in combined_balance_terms.items() if coef != 0]
+remaining_vars = [var for var in F_vars if var not in redundant_vars]
 
-# def diag_sign(A2):
-#     "Compute the signs of the diagonal of matrix A"
+print("\nRedundant Variables:")
+print(redundant_vars)
+print("\nNon-Redundant Variables:")
+print(remaining_vars)
 
-#     D = np.diag(np.sign(np.diag(A2)))
 
-#     return D
-
-# def adjust_sign(Q, R):
-#     """
-#     Adjust the signs of the columns in Q and rows in R to
-#     impose positive diagonal of Q
-#     """
-
-#     D = diag_sign(Q)
-
-#     Q[:, :] = Q @ D
-#     R[:, :] = D @ R
-
-#     return Q, R
-
-# Q, R = adjust_sign(*QR_Decomposition(A2))
-
-# print(A2);print(Q),print(R)
+# for i, balance in enumerate(Gx):
+#     balance_eq = " + ".join(f"{G[i, j]}*{F_vars[j]}" for j in range(len(F_vars)) if G[i, j] != 0)
+#     print(f"Balance {i+1}: {balance_eq} = 0")
