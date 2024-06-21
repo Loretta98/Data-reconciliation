@@ -38,76 +38,86 @@ A2 = np.array([[-1,0,0],
 
 # Projection matrix P so that P = Q2.T, Q = [Q1,Q2], P(A1x+A2u) = PA1x = Gx = 0, A2 = QR using the orthogonalization (Q orthogonal matrix and R upper trangular matrix) 
 
-#Q,R = scipy.linalg.qr(A2) 
+# Perform QR decomposition of A2
+Q, R = qr(A2, mode="full")
 
-def QR_Decomposition(A2):
-    n, m = A2.shape # get the shape of A
+# Print results of QR decomposition
+print("A2:")
+print(A2)
+print("\nQ:")
+print(Q)
+print("\nR:")
+print(R)
 
-    Q = np.zeros((n, n)) # initialize matrix Q
-    u = np.zeros((n, n)) # initialize matrix u
+# Verify the QR decomposition
+check = np.dot(Q, R)
+print("\nCheck (Q * R):")
+print(check)
 
-    u[:, 0] = A2[:, 0]
-    Q[:, 0] = u[:, 0] / np.linalg.norm(u[:, 0])
+# Split Q into Q1 and Q2
+Q1 = Q[:, :A2.shape[1]]  # First 3 columns of Q (same number as columns in A2)
+Q2 = Q[:, A2.shape[1]:]  # Remaining columns of Q
 
-    for i in range(1, m):
-
-        u[:, i] = A2[:, i]
-        for j in range(i):
-            u[:, i] -= (A2[:, i] @ Q[:, j]) * Q[:, j] # get each u vector
-
-        Q[:, i] = u[:, i] / np.linalg.norm(u[:, i]) # compute each e vetor
-
-    R = np.zeros((n, m))
-    for i in range(n):
-        for j in range(i, m):
-            R[i, j] = A2[:, j] @ Q[:, i]
-
-    return Q, R
-
-def diag_sign(A2):
-    "Compute the signs of the diagonal of matrix A"
-
-    D = np.diag(np.sign(np.diag(A2)))
-
-    return D
-
-def adjust_sign(Q, R):
-    """
-    Adjust the signs of the columns in Q and rows in R to
-    impose positive diagonal of Q
-    """
-
-    D = diag_sign(Q)
-
-    Q[:, :] = Q @ D
-    R[:, :] = D @ R
-
-    return Q, R
-
-Q, R = adjust_sign(*QR_Decomposition(A2))
-
-print(A2);print(Q),print(R)
-
-Q_scipy, R_scipy = adjust_sign(*qr(A2))
-
-print(Q_scipy,R_scipy)
-
-
-# Projection matrix P so that P = Q2.T, Q = [Q1,Q2], P(A1x+A2u) = PA1x = Gx = 0
-
-Q1 = Q_scipy[:, :3]
-Q2 = Q_scipy[:, 3:]
-
-#P = np.dot(Q2, Q2.T)
+# Form the projection matrix P
 P = Q2.T
+#P = np.dot(Q2, Q2.T)
 print("\nProjection matrix P:")
 print(P)
 
 PA2 = np.dot(P,A2)
-print("Product Matrix")
+print("\nPA2:")
 print(PA2)
 
+
+# Calculate G = PA1
 G = np.dot(P, A1)
 print("\nMatrix G (P * A1):")
 print(G)
 
+# def QR_Decomposition(A2):
+#     n, m = A2.shape # get the shape of A
+
+#     Q = np.zeros((n, n)) # initialize matrix Q
+#     u = np.zeros((n, n)) # initialize matrix u
+
+#     u[:, 0] = A2[:, 0]
+#     Q[:, 0] = u[:, 0] / np.linalg.norm(u[:, 0])
+
+#     for i in range(1, m):
+
+#         u[:, i] = A2[:, i]
+#         for j in range(i):
+#             u[:, i] -= (A2[:, i] @ Q[:, j]) * Q[:, j] # get each u vector
+
+#         Q[:, i] = u[:, i] / np.linalg.norm(u[:, i]) # compute each e vetor
+
+#     R = np.zeros((n, m))
+#     for i in range(n):
+#         for j in range(i, m):
+#             R[i, j] = A2[:, j] @ Q[:, i]
+
+#     return Q, R
+
+# def diag_sign(A2):
+#     "Compute the signs of the diagonal of matrix A"
+
+#     D = np.diag(np.sign(np.diag(A2)))
+
+#     return D
+
+# def adjust_sign(Q, R):
+#     """
+#     Adjust the signs of the columns in Q and rows in R to
+#     impose positive diagonal of Q
+#     """
+
+#     D = diag_sign(Q)
+
+#     Q[:, :] = Q @ D
+#     R[:, :] = D @ R
+
+#     return Q, R
+
+# Q, R = adjust_sign(*QR_Decomposition(A2))
+
+# print(A2);print(Q),print(R)
