@@ -21,6 +21,7 @@ def highlight_outliers(input_path, n_steps):
 
     for filename in files:
         print(f"Processing file: {filename}")
+
         # Read CSV file
         df = pd.read_csv(open(filename, 'rb'))
         
@@ -62,7 +63,7 @@ def highlight_outliers(input_path, n_steps):
         st_devs_df.to_csv(st_dev_csv_path, index=False)
         
         # Plot the standard deviations and highlight outliers
-        plt.figure(figsize=(12, 6))
+        plt.figure(figsize=(35, 12))
         for key, st_devs in all_st_devs.items():
             plt.plot(st_devs, marker='o', label=key)
         
@@ -73,7 +74,7 @@ def highlight_outliers(input_path, n_steps):
         plt.title(f'Standard Deviations for {file_basename}')
         plt.xlabel('Index (Time)')
         plt.ylabel('Standard Deviation')
-        plt.legend(loc='upper right', bbox_to_anchor=(1.15, 1))
+        #plt.legend(loc='upper right', bbox_to_anchor=(1.15, 1))
         plt.grid(True)
         
         # Save the plot
@@ -82,7 +83,7 @@ def highlight_outliers(input_path, n_steps):
         plt.close()
         
         # Plot the original data with highlighted outliers
-        plt.figure(figsize=(12, 6))
+        plt.figure(figsize=(35, 12))
         plt.plot(third_column, label='Original Data')
         
         for interval_start, interval_end, n_steps in outlier_intervals:
@@ -91,7 +92,7 @@ def highlight_outliers(input_path, n_steps):
         plt.title(f'Original Data with Outliers for {file_basename}')
         plt.xlabel('Index (Time)')
         plt.ylabel('Value')
-        plt.legend(loc='upper right', bbox_to_anchor=(1.15, 1))
+        #plt.legend(loc='upper right', bbox_to_anchor=(1.15, 1))
         plt.grid(True)
         
         # Save the plot
@@ -107,7 +108,8 @@ def highlight_outliers(input_path, n_steps):
                 report_file.write(f"Interval: {interval_start} - {interval_end}, n_steps: {n_steps}\n")
 
 # Example usage
-input_directory = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV'
+#input_directory = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV'
+input_directory = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation'
 # The discretization for the data analysis should be higher or equivalent to the characteristic time of the system 
-n_steps = 15  # Ensure n_steps is an integer
+n_steps = 10 # Ensure n_steps is an integer
 highlight_outliers(input_directory, n_steps)
