@@ -4,7 +4,7 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 
-def highlight_outliers(input_path, n_steps):
+def highlight_outliers(input_path, n_steps, values):
     path = input_path
     outliers_st_dev_path = os.path.join(path, 'outliers_st_dev')
 
@@ -16,18 +16,17 @@ def highlight_outliers(input_path, n_steps):
     # Print the number of files found
     print(f'Number of CSV files found: {len(files)}')
 
-    # Allowable range for standard deviations
-    allowable_range = (-2.5, 2.5)  # Example allowable range for standard deviations
-
+    k = 0
     for filename in files:
         print(f"Processing file: {filename}")
-
+        print(f"Current file index (k): {k}")
+        
         # Read CSV file
         df = pd.read_csv(open(filename, 'rb'))
-        
+
         # Extract the third column
         third_column = df.iloc[:, 2]
-        
+
         # Check the data type of third column
         if third_column.dtype == 'object':
             try:
@@ -35,7 +34,11 @@ def highlight_outliers(input_path, n_steps):
             except ValueError as e:
                 print(f"Error converting column to float in file {filename}: {e}")
                 continue
-        
+
+        # Calculate the number of full n_steps intervals
+        num_intervals = len(third_column) // n_steps
+        # print(f'Number of complete n_steps intervals: {num_intervals}')
+
         # Store the values for each n_steps in a dictionary
         all_st_devs = {}
         outlier_intervals = []
@@ -43,63 +46,84 @@ def highlight_outliers(input_path, n_steps):
         # Calculate standard deviation for every n_steps rows
         st_devs = [np.std(third_column[i:i+n_steps]) for i in range(0, len(third_column), n_steps)]
         all_st_devs[f'n_steps_{n_steps}'] = st_devs
-        
+
+        # Initialize the allowable range matrix
+        allowable_range = np.ones((len(values), num_intervals+1))
+
+        # Adjust allowable range based on the mean of each segment
+        for i in range(num_intervals):
+            segment_mean = np.mean(third_column[i * n_steps:(i + 1) * n_steps])
+            # print(f"Segment mean for interval {i}: {segment_mean}")
+            if k == 0:
+                allowable_range[k, i] = values[k] * segment_mean / 100
+            elif k == 1:
+                allowable_range[k, i] = values[k] * segment_mean / 100
+            else:
+                allowable_range[k, i] = values[k]
+        #     print(f"Allowable range for k={k}, i={i}: {allowable_range[k, i]}")
+
+        # print("Final allowable range matrix:")
+        # print(allowable_range)
+
         # Detect outliers
         for i, std in enumerate(st_devs):
-            if std < allowable_range[0] or std > allowable_range[1]:
+            if std < -allowable_range[k, i] or std > allowable_range[k, i]:
                 interval_start = i * n_steps
                 interval_end = min(interval_start + n_steps - 1, len(third_column) - 1)  # Ensure the end index is within bounds
                 outlier_intervals.append((interval_start, interval_end, n_steps))
-        
+        k += 1
         # Create a DataFrame from the dictionary
         max_length = max(len(st_devs) for st_devs in all_st_devs.values())
         for key in all_st_devs:
             all_st_devs[key] += [np.nan] * (max_length - len(all_st_devs[key]))  # Fill shorter lists with NaN
         st_devs_df = pd.DataFrame(all_st_devs)
-        
+
         # Save the DataFrame to a CSV file
         file_basename = os.path.basename(filename).split('.')[0]
         st_dev_csv_path = os.path.join(outliers_st_dev_path, f"outliers_st_dev_{file_basename}.csv")
         st_devs_df.to_csv(st_dev_csv_path, index=False)
-        
+
         # Plot the standard deviations and highlight outliers
         plt.figure(figsize=(35, 12))
         for key, st_devs in all_st_devs.items():
             plt.plot(st_devs, marker='o', label=key)
         
+        # Plot the allowable range as a shaded area
+        plt.fill_between(range(num_intervals+1), allowable_range[k-1, :], -allowable_range[k-1, :], color='gray', alpha=0.2, label='Allowable Range')
+
         # Highlight outlier intervals
         for interval_start, interval_end, n_steps in outlier_intervals:
             plt.axvspan(interval_start // n_steps, interval_end // n_steps, color='red', alpha=0.3, label=f'Outlier {interval_start}-{interval_end} (n_steps={n_steps})')
-        
+
         plt.title(f'Standard Deviations for {file_basename}')
         plt.xlabel('Index (Time)')
         plt.ylabel('Standard Deviation')
-        #plt.legend(loc='upper right', bbox_to_anchor=(1.15, 1))
+        plt.legend(loc='upper right', bbox_to_anchor=(1.15, 1))
         plt.grid(True)
-        
+
         # Save the plot
         plot_path = os.path.join(outliers_st_dev_path, f"plot_outliers_st_dev_{file_basename}.png")
         plt.savefig(plot_path)
         plt.close()
-        
+
         # Plot the original data with highlighted outliers
         plt.figure(figsize=(35, 12))
         plt.plot(third_column, label='Original Data')
-        
+
         for interval_start, interval_end, n_steps in outlier_intervals:
             plt.axvspan(interval_start, interval_end, color='red', alpha=0.3, label=f'Outlier {interval_start}-{interval_end} (n_steps={n_steps})')
-        
+
         plt.title(f'Original Data with Outliers for {file_basename}')
         plt.xlabel('Index (Time)')
         plt.ylabel('Value')
-        #plt.legend(loc='upper right', bbox_to_anchor=(1.15, 1))
+        plt.legend(loc='upper right', bbox_to_anchor=(1.15, 1))
         plt.grid(True)
-        
+
         # Save the plot
         plot_path = os.path.join(outliers_st_dev_path, f"plot_original_data_outliers_{file_basename}.png")
         plt.savefig(plot_path)
         plt.close()
-        
+
         # Report the intervals
         intervals_report_path = os.path.join(outliers_st_dev_path, f"intervals_report_{file_basename}.txt")
         with open(intervals_report_path, 'w') as report_file:
@@ -111,5 +135,7 @@ def highlight_outliers(input_path, n_steps):
 #input_directory = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV'
 input_directory = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation'
 # The discretization for the data analysis should be higher or equivalent to the characteristic time of the system 
-n_steps = 10 # Ensure n_steps is an integer
-highlight_outliers(input_directory, n_steps)
+n_steps = 30 # Ensure n_steps is an integer
+# measurement errors from provider, for each device 
+values = [3.2 , 6.6 , 2, 1, 0.5]
+highlight_outliers(input_directory, n_steps, values)
