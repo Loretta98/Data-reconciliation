@@ -39,6 +39,10 @@ for filename in files:
     # Identify outliers
     outliers = mean_distances > threshold
     outlier_indices = np.where(outliers)[0]
+    outliers_report_path = os.path.join(outliers_st_dev_path, f"outliers_report_{file_basename}.txt")
+    with open(outliers_report_path, 'w') as report_file:
+            report_file.write("Outlier Indices :\n")
+            report_file.write(f"Index: {outlier_indices} \n"); report_file.write(f"Number of outliers: {len(outlier_indices)}\n")
     #print(f"Number of outliers detected: {len(outlier_indices)}")
     #print("Indices of outliers:", outlier_indices)
     #print("Outlier data points:", third_column.iloc[outlier_indices])
