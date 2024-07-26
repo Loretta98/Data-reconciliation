@@ -73,10 +73,11 @@ def highlight_outliers(input_path, n_steps, values, z_threshold):
         #     mean_value = np.mean(window)
         #     st_dev = np.std(window)
         #     z_score = (third_column_non_zero[i + n_steps - 1] - mean_value) / st_dev
-            
-        #     if abs(z_score) > z_threshold:
-        #         interval_start = i + n_steps - 1
-        #         outlier_intervals.append((interval_start, interval_start, 1))
+        z_score = np.array(z_score)
+        for i in range(0,len(z_score)):
+            if abs(z_score[i]) > z_threshold:
+                interval_start = i + n_steps - 1
+                outlier_intervals.append((interval_start, interval_start, 1))
 
         #         # Linear interpolation for outlier replacement
         #         if interval_start > 0 and interval_start < len(third_column_non_zero) - 1:
@@ -98,10 +99,6 @@ def highlight_outliers(input_path, n_steps, values, z_threshold):
         # st_dev_csv_path = os.path.join(outliers_st_dev_path, f"outliers_st_dev_{file_basename}.csv")
         # st_devs_df.to_csv(st_dev_csv_path, index=False)
 
-        # Plot the standard deviations and highlight outliers
-        plt.figure(figsize=(35, 12))
-        for key, st_devs in all_st_devs.items():
-            plt.plot(st_devs, marker='o', label=key)
         
         # Plot the allowable range as a shaded area
         plt.fill_between(range(num_intervals + 1), allowable_range[k-1, :], -allowable_range[k-1, :], color='gray', alpha=0.2, label='Allowable Range')
@@ -109,17 +106,6 @@ def highlight_outliers(input_path, n_steps, values, z_threshold):
         # Highlight outlier intervals
         for interval_start, interval_end, n_steps in outlier_intervals:
             plt.axvspan(interval_start // n_steps, interval_end // n_steps, color='red', alpha=0.3, label=f'Outlier {interval_start}-{interval_end} (n_steps={n_steps})')
-
-        plt.title(f'Standard Deviations for {file_basename}')
-        plt.xlabel('Index (Time)')
-        plt.ylabel('Standard Deviation')
-        plt.legend(loc='upper right', bbox_to_anchor=(1.15, 1))
-        plt.grid(True)
-
-        # Save the plot
-        plot_path = os.path.join(outliers_st_dev_path, f"plot_outliers_st_dev_{file_basename}.png")
-        plt.savefig(plot_path)
-        plt.close()
 
         # Plot the original data with highlighted outliers
         plt.figure(figsize=(35, 12))
@@ -142,13 +128,6 @@ def highlight_outliers(input_path, n_steps, values, z_threshold):
         plot_path = os.path.join(outliers_st_dev_path, f"plot_original_data_outliers_{file_basename}.png")
         plt.savefig(plot_path)
         plt.close()
-
-        # Report the intervals
-        intervals_report_path = os.path.join(outliers_st_dev_path, f"intervals_report_{file_basename}.txt")
-        with open(intervals_report_path, 'w') as report_file:
-            report_file.write("Outlier Intervals (Start, End, n_steps):\n")
-            for interval_start, interval_end, n_steps in outlier_intervals:
-                report_file.write(f"Interval: {interval_start} - {interval_end}, n_steps: {n_steps}\n")
 
 def zscore(x, window):
     r = x.rolling(window=window)

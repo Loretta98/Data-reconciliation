@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 import glob
-from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import NearestNeighbors, KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import os 
