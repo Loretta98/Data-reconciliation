@@ -52,22 +52,22 @@ def highlight_outliers(input_path, n_steps, values):
         all_st_devs[f'n_steps_{n_steps}'] = st_devs
 
         # Initialize the allowable range matrix
-        allowable_range = np.ones((len(values), num_intervals))
+        allowable_range = np.ones((len(values), num_intervals+1))
 
         # Adjust allowable range based on the mean of each segment
-        for i in range(num_intervals):
+        for i in range(0,num_intervals):
             segment_mean = np.mean(third_column[i * n_steps:(i + 1) * n_steps])
-            print(f"Segment mean for interval {i}: {segment_mean}")
+            #print(f"Segment mean for interval {i}: {segment_mean}")
             if k == 0:
                 allowable_range[k, i] = values[k] * segment_mean / 100
             elif k == 1:
                 allowable_range[k, i] = values[k] * segment_mean / 100
             else:
                 allowable_range[k, i] = values[k]
-            print(f"Allowable range for k={k}, i={i}: {allowable_range[k, i]}")
+            #print(f"Allowable range for k={k}, i={i}: {allowable_range[k, i]}")
 
-        print("Final allowable range matrix:")
-        print(allowable_range)
+        #print("Final allowable range matrix:")
+        #print(allowable_range)
 
         # Detect outliers
         for i, std in enumerate(st_devs):
