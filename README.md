@@ -8,4 +8,6 @@ Data_Rec_Lin_lagrangian tries to use the Lagrangian multipliers to find the reco
 
 Outliers_detection_for_n_steps is based on the standard deviation of the data sets to identify outliers and stationary intervals with variable n_steps
 
-Outliers_detection_1 sorts the files by standard deviation, with maximum 2.5% error with fixed n_steps
+Outliers_detection_1 sorts the files by standard deviation, according to the maximum measurement device error
+
+Outliers_detection_2 sorts the files using the KNN method, with the scikit library
