@@ -27,7 +27,7 @@ for filename in files:
     # Assuming 'data' is a DataFrame with your features
     scaler = StandardScaler()
     data_scaled = scaler.fit_transform(data)
-    knn = NearestNeighbors(n_neighbors=30)  # You can choose the number of neighbors
+    knn = NearestNeighbors(n_neighbors=15)  # You can choose the number of neighbors
     knn.fit(data_scaled)
     distances, indices = knn.kneighbors(data_scaled)
     # Using the mean distance to the k-nearest neighbors
@@ -43,12 +43,12 @@ for filename in files:
     with open(outliers_report_path, 'w') as report_file:
             report_file.write("Outlier Indices :\n")
             report_file.write(f"Index: {outlier_indices} \n"); report_file.write(f"Number of outliers: {len(outlier_indices)}\n")
-    #print(f"Number of outliers detected: {len(outlier_indices)}")
+    print(f"Number of outliers detected: {len(outlier_indices)}")
     #print("Indices of outliers:", outlier_indices)
     #print("Outlier data points:", third_column.iloc[outlier_indices])
         # Plot the data and highlight outliers
     plt.figure(figsize=(24, 10))
-    plt.plot(data.index, data.iloc[:, 0], label='Data', color='blue')
+    plt.scatter(data.index, data.iloc[:, 0], label='Data', color='blue')
     plt.scatter(data.index[outlier_indices], data.iloc[outlier_indices, 0], color='red', label='Outliers')
     plt.title(f"Data and Outliers in {file_basename}")
     plt.xlabel('Index')
