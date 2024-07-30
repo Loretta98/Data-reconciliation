@@ -15,6 +15,9 @@ outliers_st_dev_path = os.path.join(path, 'KNN + ss')
 # Create the 'outliers_st_dev' directory if it does not exist
 os.makedirs(outliers_st_dev_path, exist_ok=True)
 files = sorted(glob.glob(path + '/*.csv'))
+window_size = 10 
+values = [3.2 , 6.6 , 2, 1, 0.5]
+k = 0 
 
 for filename in files:
     print(f"Processing file: {filename}")
@@ -36,19 +39,25 @@ for filename in files:
     # Computing the mean and standard deviation of the distances for each point's neighbors 
     # Compute the mean distance
     mean_distances = distances.mean(axis=1)
-
-    # Set a threshold for steady states
-    threshold_steady = np.mean(mean_distances) - 0.5 * np.std(mean_distances)
-
-    # Identify steady states
-    steady_states = mean_distances < threshold_steady
-
-    # Dynamic behavior (steady states)
-    steady_state_indices = np.where(steady_states)[0]
-    print(f"Number of steady states detected: {len(steady_state_indices)}")
-    print("Indices of steady states:", steady_state_indices)
-    print("Steady state data points:", data.iloc[steady_state_indices])
-    # The method to weight the distance for the KNN can be based on the mean or max distance
+    
+    # Calculate rolling standard deviation
+    rolling_std = third_column.rolling(window=window_size).std()
+    num_intervals1 = len(third_column) // window_size
+    num_intervals = np.size(rolling_std)
+    # Initialize the allowable range matrix
+    allowable_range = np.ones((len(values), num_intervals+1))
+    # Adjust allowable range based on the mean of each segment
+    for i in range(0,num_intervals1):
+        segment_mean = np.mean(third_column[i * window_size:(i + 1) * window_size])
+        for j in range(0,window_size): 
+            if k == 0:
+                allowable_range[k, j+i] = values[k] * segment_mean / 100
+            elif k == 1:
+                allowable_range[k, j+i] = values[k] * segment_mean / 100
+            else:
+                allowable_range[k, j+i] = values[k]
+    # Identify steady states where rolling standard deviation is below the threshold
+    df['steady_state'] = (rolling_std < allowable_range[k,:-1]).astype(int)
 
     # # Using the mean distance to the k-nearest neighbors
     # mean_distances = distances.mean(axis=1)
@@ -74,7 +83,6 @@ for filename in files:
     plt.figure(figsize=(24, 10))
     plt.scatter(data.index, data.iloc[:, 0], label='Data', color='blue')
     plt.scatter(data.index[outlier_indices], data.iloc[outlier_indices, 0], color='red', label='Outliers')
-    plt.scatter(data.index[steady_state_indices],data.iloc[steady_state_indices,0],color='g',label='Steady States')
     plt.title(f"Data, Outliers and steady states in {file_basename}")
     plt.xlabel('Index')
     plt.ylabel('Value')
@@ -84,4 +92,14 @@ for filename in files:
     # Save the plot
     plot_path = os.path.join(outliers_st_dev_path, f"plot_outliers_st_dev_{file_basename}.png")
     plt.savefig(plot_path)
+    plt.close()
+
+    plt.figure(figsize=(24, 10))
+    plt.scatter(third_column.index, third_column,label='Data points') 
+    plt.scatter(third_column.index[df['steady_state'] == 1], third_column[df['steady_state'] == 1], color='green', label='Steady States')
+    plt.xlabel('Timeframe')
+    plt.ylabel('Value')
+    plt.title(f'Steady States for {file_basename}')
+    plt.legend()
+    plt.savefig(os.path.join(outliers_st_dev_path, f"{file_basename}steady_states_plot.png"))
     plt.close()

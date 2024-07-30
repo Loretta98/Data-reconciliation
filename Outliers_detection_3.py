@@ -47,6 +47,10 @@ for filename in files:
             else:
                 allowable_range[k, j+i] = values[k]
     
+    # Identify steady states where rolling standard deviation is below the threshold
+    
+    df['steady_state'] = (rolling_std < allowable_range[k,:-1]).astype(int)
+    
     # Reshape the data to be a 2D array as required by IsolationForest
     data = third_column.values.reshape(-1, 1)
     
@@ -62,9 +66,7 @@ for filename in files:
     # -1 for outliers and 1 for inliers, converting to 0 for inliers and 1 for outliers
     df['anomaly'] = df['anomaly'].map({1: 0, -1: 1})
 
-    # Identify steady states where rolling standard deviation is below the threshold
-    
-    df['steady_state'] = (rolling_std < allowable_range[k,:-1]).astype(int)
+
     
     # Save the result to a new CSV file
     output_file = os.path.join(outliers_st_dev_path, f"{file_basename}_with_outliers.csv")
@@ -90,8 +92,8 @@ for filename in files:
     plt.title(f'Isolation Forest Outlier Detection for {file_basename}')
     plt.legend()
     plt.savefig(os.path.join(outliers_st_dev_path, f"{file_basename}_outliers.png"))
-    
     plt.close()
+    
     plt.figure(figsize=(24, 10))
     plt.scatter(third_column.index, third_column,label='Data points') 
     plt.scatter(third_column.index[df['steady_state'] == 1], third_column[df['steady_state'] == 1], color='green', label='Steady States')

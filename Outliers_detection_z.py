@@ -27,9 +27,6 @@ def highlight_outliers(input_path, n_steps, values, z_threshold):
         # Extract the third column
         third_column = df.iloc[:, 2]
 
-        # Calculate the number of full n_steps intervals
-        num_intervals = len(third_column) // n_steps
-
         # Detect outliers using a rolling z-score method
         z_scores = zscore(third_column, n_steps)
         
@@ -45,6 +42,7 @@ def highlight_outliers(input_path, n_steps, values, z_threshold):
         # Plot the original data with highlighted outliers
         plt.figure(figsize=(24, 10))
         plt.scatter(third_column.index, third_column, label='Original Data', color='blue')
+        plt.plot(third_column.index,z_scores)
         if outlier_intervals:  # Check if there are outliers to plot
             plt.scatter(third_column.index[outlier_intervals], third_column[outlier_intervals], label='Outliers', color='red')
 
@@ -68,11 +66,14 @@ def zscore(x, window):
     m = r.mean().shift(1)
     s = r.std(ddof=0).shift(1)
     z = (x - m) / s
+    # Handle cases where the standard deviation is zero
+    # Mattia !!! help
+    z[ s < 0.1] = 0
     return z
 
 # Example usage
 input_directory = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation'
-n_steps = 15  # Ensure n_steps is an integer
+n_steps = 20  # Ensure n_steps is an integer
 values = [3.2, 6.6, 2, 1, 0.5]  # Measurement errors from provider, for each device
-z_threshold = 3
+z_threshold = 3.0
 highlight_outliers(input_directory, n_steps, values, z_threshold)
