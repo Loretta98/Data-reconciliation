@@ -11,7 +11,7 @@ import os
 
 # List CSV files and sort them
 path = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation'
-outliers_st_dev_path = os.path.join(path, 'KNN')
+outliers_st_dev_path = os.path.join(path, 'KNN + ss')
 # Create the 'outliers_st_dev' directory if it does not exist
 os.makedirs(outliers_st_dev_path, exist_ok=True)
 files = sorted(glob.glob(path + '/*.csv'))
@@ -31,6 +31,23 @@ for filename in files:
     knn.fit(data_scaled)
     distances, indices = knn.kneighbors(data_scaled)
 
+    # Identify Steady states, which can be simplified as clusters with minimal variations. 
+    # Option 1: to use density-based clustering (DBSCAN) to identify clusters
+    # Computing the mean and standard deviation of the distances for each point's neighbors 
+    # Compute the mean distance
+    mean_distances = distances.mean(axis=1)
+
+    # Set a threshold for steady states
+    threshold_steady = np.mean(mean_distances) - 0.5 * np.std(mean_distances)
+
+    # Identify steady states
+    steady_states = mean_distances < threshold_steady
+
+    # Dynamic behavior (steady states)
+    steady_state_indices = np.where(steady_states)[0]
+    print(f"Number of steady states detected: {len(steady_state_indices)}")
+    print("Indices of steady states:", steady_state_indices)
+    print("Steady state data points:", data.iloc[steady_state_indices])
     # The method to weight the distance for the KNN can be based on the mean or max distance
 
     # # Using the mean distance to the k-nearest neighbors
@@ -57,7 +74,8 @@ for filename in files:
     plt.figure(figsize=(24, 10))
     plt.scatter(data.index, data.iloc[:, 0], label='Data', color='blue')
     plt.scatter(data.index[outlier_indices], data.iloc[outlier_indices, 0], color='red', label='Outliers')
-    plt.title(f"Data and Outliers in {file_basename}")
+    plt.scatter(data.index[steady_state_indices],data.iloc[steady_state_indices,0],color='g',label='Steady States')
+    plt.title(f"Data, Outliers and steady states in {file_basename}")
     plt.xlabel('Index')
     plt.ylabel('Value')
     plt.legend()
