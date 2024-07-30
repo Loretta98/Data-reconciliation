@@ -48,7 +48,7 @@ def highlight_outliers(input_path, n_steps, values, z_threshold):
         if outlier_intervals:  # Check if there are outliers to plot
             plt.scatter(third_column.index[outlier_intervals], third_column[outlier_intervals], label='Outliers', color='red')
 
-        plt.title(f'Original Data with Outliers for {file_basename}')
+        plt.title(f'Z score ouliers detection in {file_basename}')
         plt.xlabel('Index (Time)')
         plt.ylabel('Value')
         plt.legend(loc='upper right', bbox_to_anchor=(1.15, 1))
