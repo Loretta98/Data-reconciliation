@@ -66,6 +66,7 @@ for filename in files:
     max_distances = distances.max(axis=1)
 
     distance = max_distances
+    
     # Set a threshold for what you consider an outlier
     threshold = np.mean(distance) + 2 * np.std(distance)
 

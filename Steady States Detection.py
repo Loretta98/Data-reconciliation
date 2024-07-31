@@ -1,3 +1,9 @@
+###### Steady States detection with Dalheim robust method #########
+
+# Steady States dection applied on raw data as a first approach 
+# to be tested on cleaned from outliers data 
+
+
 import numpy as np
 import pandas as pd
 from scipy.stats import t
@@ -23,7 +29,6 @@ def detect_steady_state(data, window_size, alpha):
     for start in range(len(data) - window_size + 1):
         end = start + window_size
         window_data = data[start:end]
-        
         x = np.arange(n)
         z_t = window_data
         
@@ -51,9 +56,11 @@ def detect_steady_state(data, window_size, alpha):
         # Estimate sigma_b1
         sum_t_diff_squared = np.sum((x - t_average) ** 2)
         sigma_b1 = sigma_a / np.sqrt(sum_t_diff_squared)
-        
+        if sigma_b1 < 0.01: 
+            t1 = 0
+        else: 
         # Calculate t1
-        t1 = b1 / sigma_b1
+            t1 = b1 / sigma_b1
         
         # Check if the null hypothesis is rejected
         if abs(t1) > t_critical:
@@ -63,6 +70,10 @@ def detect_steady_state(data, window_size, alpha):
 
     return [unsteady_state_windows,steady_state_windows]
 
+
+alpha = np.array([0.05,0.05,0.005,0.005,0.01])
+window_size = np.array([10,3,15,20,20])
+k = 0 
 for filename in files:
     print(f"Processing file: {filename}")
     file_basename = os.path.basename(filename).split('.')[0]
@@ -71,10 +82,11 @@ for filename in files:
     # Extract the third column
     third_column = df.iloc[:, 2]
     data = third_column.to_frame().values.flatten()
+    print(k)
 
-    window_size = 5  # Define your window size
-    alpha = 0.01  # Significance level
-    result = detect_steady_state(data, window_size, alpha)
+    #window_size = 5  # Define your window size
+    #alpha = 0.01  # Significance level
+    result = detect_steady_state(data, window_size[k], alpha[k])
     unsteady_state_windows = result[0]
     steady_states_windows = result[1]
     #print("Steady state windows:", steady_state_windows)
@@ -101,3 +113,4 @@ for filename in files:
     plt.grid()
     plt.savefig(os.path.join(steady_states_path, f"{file_basename}_steady_states.png"))
     plt.close()
+    k = k+1
