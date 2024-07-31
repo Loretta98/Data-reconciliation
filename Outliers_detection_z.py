@@ -57,10 +57,15 @@ def highlight_outliers(input_path, n_steps, values, z_threshold):
         plt.savefig(plot_path)
         plt.close()
 
-    # Save outlier counts to a CSV file
-    outlier_counts_df = pd.DataFrame(outlier_counts)
-    outlier_counts_df.to_csv(os.path.join(outliers_st_dev_path, 'outlier_counts.csv'), index=False)
+        results.append({
+        'Filename': file_basename,
+        'Number of Outliers': num_outliers})
+    
+    # # Save outlier counts to a CSV file
+    # outlier_counts_df = pd.DataFrame(outlier_counts)
+    # outlier_counts_df.to_csv(os.path.join(outliers_st_dev_path, 'outlier_counts.csv'), index=False)
 
+    
 def zscore(x, window):
     r = x.rolling(window=window)
     m = r.mean().shift(1)
@@ -76,4 +81,13 @@ input_directory = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT
 n_steps = 20  # Ensure n_steps is an integer
 values = [3.2, 6.6, 2, 1, 0.5]  # Measurement errors from provider, for each device
 z_threshold = 3.0
+# Initialize a list to store the results
+results = []
 highlight_outliers(input_directory, n_steps, values, z_threshold)
+
+
+# Convert results list to DataFrame
+results_df = pd.DataFrame(results)
+outliers_st_dev_path = os.path.join(input_directory, 'Z_score')
+# Save the results DataFrame to a CSV file
+results_df.to_csv(os.path.join(outliers_st_dev_path, 'outliers_summary_z.csv'), index=False)

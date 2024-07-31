@@ -3,7 +3,6 @@
 # Steady States dection applied on raw data as a first approach 
 # to be tested on cleaned from outliers data 
 
-
 import numpy as np
 import pandas as pd
 from scipy.stats import t

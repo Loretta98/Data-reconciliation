@@ -1,3 +1,5 @@
+####### Outliers detection with an Isolation Forest approach ######## 
+
 import numpy as np
 import pandas as pd
 import glob
@@ -19,6 +21,8 @@ window_size = 10  # Adjust based on your data
 std_dev_threshold = 0.1  # Adjust based on your data
 values = [3.2 , 6.6 , 2, 1, 0.5]
 k = 0 
+# Initialize a list to store the results
+results = []
 
 for filename in files:
     print(f"Processing file: {filename}")
@@ -67,22 +71,23 @@ for filename in files:
     df['anomaly'] = df['anomaly'].map({1: 0, -1: 1})
 
 
-    
-    # Save the result to a new CSV file
-    output_file = os.path.join(outliers_st_dev_path, f"{file_basename}_with_outliers.csv")
-    df.to_csv(output_file, index=False)
-    
-    # Save the steady state result to a new CSV file
-    steady_state_file = os.path.join(steady_state_path, f"{file_basename}_steady_states.csv")
-    df.to_csv(steady_state_file, index=False)
+    # # Save the result to a new CSV file
+    # output_file = os.path.join(outliers_st_dev_path, f"{file_basename}_with_outliers.csv")
+    # df.to_csv(output_file, index=False)
     
     # Print the number of anomalies detected
     num_anomalies = df['anomaly'].sum()
     print(f"Number of anomalies detected in {filename}: {num_anomalies}")
     
-    # Print the number of steady states detected
-    num_steady_states = df['steady_state'].sum()
-    print(f"Number of steady states detected in {filename}: {num_steady_states}")
+    # # Print the number of steady states detected
+    # num_steady_states = df['steady_state'].sum()
+    # print(f"Number of steady states detected in {filename}: {num_steady_states}")
+
+    # Add results to the list
+    results.append({
+        'Filename': file_basename,
+        'Number of Outliers': num_anomalies,
+    })
     
     # Optionally plot the data
     plt.figure(figsize=(24, 10))
@@ -104,3 +109,9 @@ for filename in files:
     plt.savefig(os.path.join(outliers_st_dev_path, f"{file_basename}steady_states_plot.png"))
     plt.close()
     k = k+1
+
+# Convert results list to DataFrame
+results_df = pd.DataFrame(results)
+
+# Save the results DataFrame to a CSV file
+results_df.to_csv(os.path.join(outliers_st_dev_path, 'outliers_summary_IF.csv'), index=False)
