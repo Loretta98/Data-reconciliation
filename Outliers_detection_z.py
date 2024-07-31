@@ -42,7 +42,7 @@ def highlight_outliers(input_path, n_steps, values, z_threshold):
         # Plot the original data with highlighted outliers
         plt.figure(figsize=(24, 10))
         plt.scatter(third_column.index, third_column, label='Original Data', color='blue')
-        plt.plot(third_column.index,z_scores)
+        #plt.plot(third_column.index,z_scores)
         if outlier_intervals:  # Check if there are outliers to plot
             plt.scatter(third_column.index[outlier_intervals], third_column[outlier_intervals], label='Outliers', color='red')
 
