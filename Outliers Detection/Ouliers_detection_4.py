@@ -1,7 +1,4 @@
-################### Outliers detection through LOF method ###################
-#The Local Outlier Factor (LOF) algorithm is a more advanced method that measures the local density deviation of a given data 
-# point with respect to its neighbors. Points with a lower density than their neighbors are considered outliers.
-
+################### Outliers detection through KNN+LOF method (literature) ###################
 
 import numpy as np
 import pandas as pd
