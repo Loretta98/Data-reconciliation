@@ -1,4 +1,3 @@
-################### Outliers detection through DBSCAN method ###################
 import numpy as np
 import pandas as pd
 import glob
@@ -9,17 +8,21 @@ import matplotlib.pyplot as plt
 import os
 
 # Paths
-path = os.path.join('C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation')
-outliers_st_dev_path = os.path.join(path, 'DBSCAN')
+base_path = os.path.join('C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation')
+outliers_st_dev_path = os.path.join(base_path, 'DBSCAN')
+merged_data_path = os.path.join(base_path, 'merged_data', 'merged_data.csv')
 
 # Create the 'outliers_st_dev' directory if it does not exist
 os.makedirs(outliers_st_dev_path, exist_ok=True)
 
 # List CSV files and sort them
-files = sorted(glob.glob(os.path.join(path, '*.csv')))
+files = sorted(glob.glob(os.path.join(base_path, '*.csv')))
 eps_values = [0.01, 0.01, 0.01, 0.01, 0.01]  # DBSCAN parameter for each dataset
 min_samples = 5  # Minimum number of samples in a neighborhood for a point to be considered a core point
 k = 0
+
+# Load the merged_data file
+merged_df = pd.read_csv(merged_data_path)
 
 # Initialize a list to store the results
 results = []
@@ -70,6 +73,11 @@ for filename in files:
 
     print(f"Number of outliers detected: {len(outlier_indices)}")
 
+    # Add outlier column to merged_data
+    outlier_col_name = f"{file_basename}_DBSCAN"
+    merged_df[outlier_col_name] = 0
+    merged_df.loc[outlier_indices, outlier_col_name] = 1
+
     # Plot data and outliers
     plt.figure(figsize=(24, 10))
     plt.scatter(data.index, data.iloc[:, 0], label='Data', color='blue')
@@ -89,3 +97,6 @@ results_df = pd.DataFrame(results)
 
 # Save the results DataFrame to a CSV file
 results_df.to_csv(os.path.join(outliers_st_dev_path, 'outliers_summary_DBSCAN.csv'), index=False)
+
+# Save the merged data with outlier columns to a CSV file
+merged_df.to_csv(merged_data_path, index=False)
