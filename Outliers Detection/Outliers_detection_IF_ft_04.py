@@ -26,8 +26,8 @@ def isolation_forest_outlier_detection(filename, values, outliers_if_path, stead
     for i in range(num_intervals1):
         segment_mean = np.mean(third_column[i * window_size:(i + 1) * window_size])
         for j in range(window_size): 
+            allowable_range[0, j+i] = values[0] * segment_mean / 100
             #allowable_range[0, j+i] = values[0] * segment_mean / 100
-            allowable_range[2, j+i] = values[2]
 
     # Identify steady states
     df['steady_state'] = (rolling_std < allowable_range[0, :-1]).astype(int)
@@ -70,21 +70,11 @@ def isolation_forest_outlier_detection(filename, values, outliers_if_path, stead
     plt.savefig(os.path.join(clean_data_path, f"{file_basename}_cleaned_plot.png"))
     plt.close()
 
-    plt.figure(figsize=(24, 10))
-    plt.scatter(third_column.index, third_column, label='Data points') 
-    plt.scatter(third_column.index[df['steady_state'] == 1], third_column[df['steady_state'] == 1], color='green', label='Steady State Points')
-    plt.xlabel('Timeframe')
-    plt.ylabel('Value')
-    plt.title(f'Steady States for {file_basename}')
-    plt.grid()
-    plt.legend()
-    plt.savefig(os.path.join(steady_state_path, f"{file_basename}_steady_states_plot.png"))
-    plt.close()
     return outliers_index
 
 
 # Example usage
-input_directory = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation/ft_03'
+input_directory = 'C:/DataRec/Ordered CSV/Mass Reconciliation/ft_04'
 values = [3.2, 6.6, 2, 1, 0.5]
 
 # Create directories for saving outputs
@@ -104,7 +94,7 @@ first_filename = files[0]
 outliers_index = isolation_forest_outlier_detection(first_filename, values, outliers_if_path, steady_state_path, clean_data_path)
 
 # Apply the outliers index from the first file to all files in the "other variables" folder
-input_directory_1 = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation/ft_03/other variables'
+input_directory_1 = 'C:/DataRec/Ordered CSV/Mass Reconciliation/ft_04/other variables'
 other_files = sorted(glob.glob(input_directory_1 + '/*.csv'))
 
 clean_data_path_other = os.path.join(input_directory_1, 'clean data')
@@ -126,14 +116,14 @@ for filename in other_files:
     
     cleaned_df_other.to_csv(cleaned_data_filename_other, index=False)
 
-    # Plot the cleaned data for other variables
-    plt.figure(figsize=(24, 10))
-    plt.scatter(cleaned_df_other[df_other.columns[1]], cleaned_df_other[df_other.columns[2]], label='Cleaned Data', color='blue')
-    plt.xlabel('Time')
-    plt.ylabel('Value')
-    plt.title(f'Cleaned Data Over Time for {file_basename_other}')
-    plt.legend()
-    plt.savefig(os.path.join(clean_data_path_other, f"{file_basename_other}_cleaned_plot.png"))
-    plt.close()
+    # # Plot the cleaned data for other variables
+    # plt.figure(figsize=(24, 10))
+    # plt.scatter(cleaned_df_other[df_other.columns[1]], cleaned_df_other[df_other.columns[2]], label='Cleaned Data', color='blue')
+    # plt.xlabel('Time')
+    # plt.ylabel('Value')
+    # plt.title(f'Cleaned Data Over Time for {file_basename_other}')
+    # plt.legend()
+    # plt.savefig(os.path.join(clean_data_path_other, f"{file_basename_other}_cleaned_plot.png"))
+    # plt.close()
 
 print("Cleaning completed for 'other variables' files.")

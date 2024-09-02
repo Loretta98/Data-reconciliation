@@ -98,7 +98,8 @@ for filename in files:
 
     # Perform kNN-NLOF outlier detection
     outlier_indices, nlof_scores = knn_nlof_outlier_detection(data, k=100, m=100)
-
+    tot_number = np.size(outlier_indices)
+    print('total number of outliers: '); print(tot_number)
     # Store results: Save the outlier indices and corresponding scores
     result_entry = {
         "file": file_basename,

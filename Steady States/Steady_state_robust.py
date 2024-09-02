@@ -1,21 +1,21 @@
-###### Steady States detection with Dalheim robust method #########
-
-# Steady States dection applied on raw data as a first approach 
-# to be tested on cleaned from outliers data 
-
-import numpy as np
-import pandas as pd
-from scipy.stats import t
 import os
-import glob
+import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
+from scipy.stats import t
+import glob
+
+# Base directory for the files
+base_path = 'C:/DataRec/Ordered CSV/Mass Reconciliation/ft_03/KNN cleaned data'
+steady_state_path = os.path.join(base_path, 'Steady States - Dalheim')
+os.makedirs(steady_state_path, exist_ok=True)
+
+# Debug: Print to verify paths
+print(f"Base path: {base_path}")
+print(f"Directory for steady states: {steady_state_path}")
 
 # List CSV files and sort them
-path = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation'
-steady_states_path = os.path.join(path, 'Steady States - Dalheim')
-# Create the 'outliers_st_dev' directory if it does not exist
-os.makedirs(steady_states_path, exist_ok=True)
-files = sorted(glob.glob(path + '/*.csv'))
+files = sorted(glob.glob(os.path.join(base_path, '*.csv')))
 
 def detect_steady_state(data, window_size, alpha):
     # Initialize list to store results
@@ -67,49 +67,49 @@ def detect_steady_state(data, window_size, alpha):
         else: 
             steady_state_windows.append((start, end, b1, b0, sigma_a, sigma_b1, t1))
 
-    return [unsteady_state_windows,steady_state_windows]
+    return [unsteady_state_windows, steady_state_windows]
 
-
-alpha = np.array([0.05,0.05,0.005,0.005,0.01])
-window_size = np.array([10,3,15,20,20])
+alpha = 0.8
+window_size = 5
 k = 0 
+
 for filename in files:
     print(f"Processing file: {filename}")
     file_basename = os.path.basename(filename).split('.')[0]
+    
     # Read CSV file
-    df = pd.read_csv(open(filename, 'rb'))
-    # Extract the third column
-    third_column = df.iloc[:, 2]
-    data = third_column.to_frame().values.flatten()
-    print(k)
-
-    #window_size = 5  # Define your window size
-    #alpha = 0.01  # Significance level
-    result = detect_steady_state(data, window_size[k], alpha[k])
+    df = pd.read_csv(filename)
+    third_column = df.iloc[:, 1]
+    data = third_column.to_numpy()
+    
+    result = detect_steady_state(data, window_size, alpha)
     unsteady_state_windows = result[0]
     steady_states_windows = result[1]
-    #print("Steady state windows:", steady_state_windows)
     
     # Save steady state windows to CSV
-    unsteady_state_df = pd.DataFrame(unsteady_state_windows, columns=['start', 'end', 'b1', 'b0', 'sigma_a', 'sigma_b1', 't1'])
-    unsteady_state_df.to_csv(os.path.join(steady_states_path, f"{file_basename}_steady_states.csv"), index=False)
+    output_csv_path = os.path.join(steady_state_path, f'{file_basename}_steady_states.csv')
+    print(f"Saving CSV to: {output_csv_path}")
+    
+    steady_state_df = pd.DataFrame(steady_states_windows, columns=['start', 'end', 'b1', 'b0', 'sigma_a', 'sigma_b1', 't1'])
+    steady_state_df.to_csv(output_csv_path, index=False)
     
     # Plot the data and the steady states
     plt.figure(figsize=(24, 10))
     plt.scatter(third_column.index, third_column, label='Data', color='blue')
     
     # Highlight steady state points
-    unsteady_state_points = []
-    for (start, end, b1, b0, sigma_a, sigma_b1, t1) in unsteady_state_windows:
-        unsteady_state_points.extend(range(start, end))
-    unsteady_state_points = np.unique(unsteady_state_points)  # Remove duplicates
-    plt.scatter(unsteady_state_points, data[unsteady_state_points], color='red', label='Steady State Points')
+    steady_state_points = []
+    for (start, end, b1, b0, sigma_a, sigma_b1, t1) in steady_states_windows:
+        steady_state_points.extend(range(start, end))
+    steady_state_points = np.unique(steady_state_points)  # Remove duplicates
+    plt.scatter(steady_state_points, data[steady_state_points], color='green', label='Steady State Points')
     
     plt.xlabel('Time')
     plt.ylabel('Value')
     plt.title(f'Steady State Detection for {file_basename}')
     plt.legend()
     plt.grid()
-    plt.savefig(os.path.join(steady_states_path, f"{file_basename}_steady_states.png"))
+    plt.savefig(os.path.join(steady_state_path, f"{file_basename}_steady_states.png"))
     plt.close()
-    k = k+1
+    
+    k += 1

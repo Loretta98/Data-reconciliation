@@ -81,6 +81,7 @@ F6r  = F8r + F7r
 F9r  = F8r + F7r
 
 Fr = np.array([F1r , F2r , F3r, F4r, F5r, F6r, F7r, F8r, F9r, F10r])
+print(Fr)
 Eps = np.array([(F1-F1r)/F1r, (F2-F2r)/F2r , (F3-F3r)/F3r, (F4-F4r)/F4r, (F6-F6r)/F6r, (F7-F7r)/F7r, (F8-F8r)/F8r])*100
 
 print(Eps)

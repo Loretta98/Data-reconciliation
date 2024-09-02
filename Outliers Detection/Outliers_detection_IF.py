@@ -20,8 +20,8 @@ def isolation_forest_outlier_detection(input_path, merged_df_path, values):
     # Print the number of files found
     print(f'Number of CSV files found: {len(files)}')
 
-    # Load the merged_data file
-    merged_df = pd.read_csv(merged_df_path)
+    # # Load the merged_data file
+    # merged_df = pd.read_csv(merged_df_path)
     
     results = []
 
@@ -41,18 +41,20 @@ def isolation_forest_outlier_detection(input_path, merged_df_path, values):
         num_intervals1 = len(third_column) // window_size
         num_intervals = np.size(rolling_std)
         # Initialize the allowable range matrix
-        allowable_range = np.ones((len(values), num_intervals+1))
+        #allowable_range = np.ones((len(values), num_intervals+1))
+        allowable_range = np.ones([1,num_intervals+1])
 
         # Adjust allowable range based on the mean of each segment
         for i in range(num_intervals1):
             segment_mean = np.mean(third_column[i * window_size:(i + 1) * window_size])
             for j in range(window_size): 
-                if k == 0:
-                    allowable_range[k, j+i] = values[k] * segment_mean / 100
-                elif k == 1:
-                    allowable_range[k, j+i] = values[k] * segment_mean / 100
-                else:
-                    allowable_range[k, j+i] = values[k]
+                    allowable_range[0,j+i] = values
+                # if k == 0:
+                #     allowable_range[k, j+i] = values[k] * segment_mean / 100
+                # elif k == 1:
+                #     allowable_range[k, j+i] = values[k] * segment_mean / 100
+                # else:
+                #     allowable_range[k, j+i] = values[k]
         
         # Identify steady states where rolling standard deviation is below the threshold
         df['steady_state'] = (rolling_std < allowable_range[k, :-1]).astype(int)
@@ -72,10 +74,10 @@ def isolation_forest_outlier_detection(input_path, merged_df_path, values):
         # -1 for outliers and 1 for inliers, converting to 0 for inliers and 1 for outliers
         df['anomaly'] = df['anomaly'].map({1: 0, -1: 1})
         
-        # Add outlier column to merged_data
-        outlier_col_name = f"{file_basename}_IF"
-        merged_df[outlier_col_name] = 0
-        merged_df.loc[df.index[df['anomaly'] == 1], outlier_col_name] = 1
+        # # Add outlier column to merged_data
+        # outlier_col_name = f"{file_basename}_IF"
+        # merged_df[outlier_col_name] = 0
+        # merged_df.loc[df.index[df['anomaly'] == 1], outlier_col_name] = 1
         
         # Print the number of anomalies detected
         num_anomalies = df['anomaly'].sum()
@@ -99,10 +101,11 @@ def isolation_forest_outlier_detection(input_path, merged_df_path, values):
         
         plt.figure(figsize=(24, 10))
         plt.scatter(third_column.index, third_column, label='Data points') 
-        plt.scatter(third_column.index[df['steady_state'] == 1], third_column[df['steady_state'] == 1], color='green', label='Steady States')
-        plt.xlabel('Timeframe')
+        plt.scatter(third_column.index[df['steady_state'] == 1], third_column[df['steady_state'] == 1], color='green', label='Steady State Points')
+        plt.xlabel('Time')
         plt.ylabel('Value')
-        plt.title(f'Steady States for {file_basename}')
+        plt.grid()
+        plt.title(f'Steady States for {file_basename} with isolation forest')
         plt.legend()
         plt.savefig(os.path.join(steady_state_path, f"{file_basename}_steady_states_plot.png"))
         plt.close()
@@ -113,13 +116,15 @@ def isolation_forest_outlier_detection(input_path, merged_df_path, values):
     # Save the results DataFrame to a CSV file
     results_df.to_csv(os.path.join(outliers_if_path, 'outliers_summary_IF.csv'), index=False)
     
-    # Save the merged data with outlier columns to a CSV file
-    merged_df.to_csv(merged_df_path, index=False)
+    # # Save the merged data with outlier columns to a CSV file
+    # merged_df.to_csv(merged_df_path, index=False)
 
 # Example usage
-input_directory = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation'
+#input_directory = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation'
+input_directory = 'C:/DataRec/Ordered CSV/Mass Reconciliation/ft_03'
 merged_data_path = os.path.join(input_directory, 'merged_data', 'merged_data.csv')
-values = [3.2, 6.6, 2, 1, 0.5]
+values = 2
+#[3.2, 6.6, 2, 1, 0.5]
 
 isolation_forest_outlier_detection(input_directory, merged_data_path, values)
 
