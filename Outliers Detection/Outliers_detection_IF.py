@@ -21,7 +21,7 @@ def isolation_forest_outlier_detection(input_path, merged_df_path, values):
     print(f'Number of CSV files found: {len(files)}')
 
     # # Load the merged_data file
-    # merged_df = pd.read_csv(merged_df_path)
+    merged_df = pd.read_csv(merged_df_path)
     
     results = []
 
@@ -48,9 +48,9 @@ def isolation_forest_outlier_detection(input_path, merged_df_path, values):
         for i in range(num_intervals1):
             segment_mean = np.mean(third_column[i * window_size:(i + 1) * window_size])
             for j in range(window_size): 
-                    allowable_range[0,j+i] = values
+                    #allowable_range[0,j+i] = values
                 # if k == 0:
-                #     allowable_range[k, j+i] = values[k] * segment_mean / 100
+                     allowable_range[0, j+i] = values * segment_mean / 100
                 # elif k == 1:
                 #     allowable_range[k, j+i] = values[k] * segment_mean / 100
                 # else:
@@ -74,10 +74,10 @@ def isolation_forest_outlier_detection(input_path, merged_df_path, values):
         # -1 for outliers and 1 for inliers, converting to 0 for inliers and 1 for outliers
         df['anomaly'] = df['anomaly'].map({1: 0, -1: 1})
         
-        # # Add outlier column to merged_data
-        # outlier_col_name = f"{file_basename}_IF"
-        # merged_df[outlier_col_name] = 0
-        # merged_df.loc[df.index[df['anomaly'] == 1], outlier_col_name] = 1
+        # Add outlier column to merged_data
+        outlier_col_name = f"{file_basename}_IF"
+        merged_df[outlier_col_name] = 0
+        merged_df.loc[df.index[df['anomaly'] == 1], outlier_col_name] = 1
         
         # Print the number of anomalies detected
         num_anomalies = df['anomaly'].sum()
@@ -117,11 +117,12 @@ def isolation_forest_outlier_detection(input_path, merged_df_path, values):
     results_df.to_csv(os.path.join(outliers_if_path, 'outliers_summary_IF.csv'), index=False)
     
     # # Save the merged data with outlier columns to a CSV file
-    # merged_df.to_csv(merged_df_path, index=False)
+    merged_df.to_csv(merged_df_path, index=False)
 
 # Example usage
 #input_directory = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation'
-input_directory = 'C:/DataRec/Ordered CSV/Mass Reconciliation/ft_03'
+#input_directory = 'C:/DataRec/Ordered CSV/Mass Reconciliation/ft_03'
+input_directory = 'C:\DataRec\FT_03'
 merged_data_path = os.path.join(input_directory, 'merged_data', 'merged_data.csv')
 values = 2
 #[3.2, 6.6, 2, 1, 0.5]

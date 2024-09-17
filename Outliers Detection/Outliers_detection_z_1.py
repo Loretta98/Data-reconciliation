@@ -5,7 +5,7 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 
-def highlight_outliers(input_path, n_steps, values, z_threshold, merged_df_path):
+def highlight_outliers(input_path, n_steps, values, z_threshold, merged_df_path,k):
     path = input_path
     outliers_st_dev_path = os.path.join(path, 'Z_score')
 
@@ -22,7 +22,7 @@ def highlight_outliers(input_path, n_steps, values, z_threshold, merged_df_path)
     # Load the merged_data file
     merged_df = pd.read_csv(merged_df_path)
 
-    for k, filename in enumerate(files):
+    for filename in files:
         print(f"Processing file: {filename}")
         
         # Read CSV file
@@ -86,11 +86,12 @@ def zscore(x, window):
     return z
 
 # Example usage
-input_directory = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation'
+#input_directory = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation'
+input_directory = 'C:\DataRec\FT_03'
 merged_data_path = os.path.join(input_directory, 'merged_data', 'merged_data.csv')
 n_steps = 20  # Ensure n_steps is an integer
 values = [3.2, 6.6, 2, 1, 0.5]  # Measurement errors from provider, for each device
 z_threshold = 3.0
 results = []
-
-highlight_outliers(input_directory, n_steps, values, z_threshold, merged_data_path)
+k = 2
+highlight_outliers(input_directory, n_steps, values, z_threshold, merged_data_path,k)

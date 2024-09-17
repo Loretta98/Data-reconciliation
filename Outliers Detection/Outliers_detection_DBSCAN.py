@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 import os
 
 # Paths
-base_path = os.path.join('C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation')
+#base_path = os.path.join('C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation')
+base_path = 'C:\DataRec\FT_03'
 outliers_st_dev_path = os.path.join(base_path, 'DBSCAN')
 merged_data_path = os.path.join(base_path, 'merged_data', 'merged_data.csv')
 
@@ -19,7 +20,7 @@ os.makedirs(outliers_st_dev_path, exist_ok=True)
 files = sorted(glob.glob(os.path.join(base_path, '*.csv')))
 eps_values = [0.01, 0.01, 0.01, 0.01, 0.01]  # DBSCAN parameter for each dataset
 min_samples = 5  # Minimum number of samples in a neighborhood for a point to be considered a core point
-k = 0
+k = 2
 
 # Load the merged_data file
 merged_df = pd.read_csv(merged_data_path)

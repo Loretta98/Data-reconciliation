@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt
 import os
 from sklearn.ensemble import IsolationForest
 
-def isolation_forest_outlier_detection(filename, values, outliers_if_path, steady_state_path, clean_data_path):
+def isolation_forest_outlier_detection(filename, values, outliers_if_path, steady_state_path, clean_data_path,k):#,merged_df_path):
     file_basename = os.path.basename(filename).split('.')[0]
     
     # Read CSV file
     df = pd.read_csv(open(filename, 'rb'))
-    
+
     # Extract the third column (assumed to be the values of interest)
     third_column = df.iloc[:, 2]
     
@@ -26,8 +26,8 @@ def isolation_forest_outlier_detection(filename, values, outliers_if_path, stead
     for i in range(num_intervals1):
         segment_mean = np.mean(third_column[i * window_size:(i + 1) * window_size])
         for j in range(window_size): 
-            #allowable_range[0, j+i] = values[0] * segment_mean / 100
-            allowable_range[2, j+i] = values[2]
+            allowable_range[0, j+i] = values[k] * segment_mean / 100
+            #allowable_range[0, j+i] = values[k]
 
     # Identify steady states
     df['steady_state'] = (rolling_std < allowable_range[0, :-1]).astype(int)
@@ -42,6 +42,7 @@ def isolation_forest_outlier_detection(filename, values, outliers_if_path, stead
     # Predict the outliers
     df['anomaly'] = iso_forest.predict(data)
     df['anomaly'] = df['anomaly'].map({1: 0, -1: 1})
+    
     
     # Collect indices for outliers from Isolation Forest
     outliers_index = df.index[df['anomaly'] == 1].tolist()
@@ -59,10 +60,12 @@ def isolation_forest_outlier_detection(filename, values, outliers_if_path, stead
     # Save the cleaned data
     cleaned_data_filename = os.path.join(clean_data_path, f"{file_basename}_cleaned.csv")
     cleaned_df.to_csv(cleaned_data_filename, index=False, columns=[df.columns[1], df.columns[2]])
-
+    viable_data = len(third_column)-len(outliers_index)
+    print(viable_data)
+    print(len(outliers_index))
     # Plot the cleaned data
     plt.figure(figsize=(24, 10))
-    plt.plot(cleaned_df[df.columns[1]], cleaned_df[df.columns[2]], label='Cleaned Data', color='blue')
+    plt.scatter(cleaned_df[df.columns[1]], cleaned_df[df.columns[2]], label='Cleaned Data', color='blue')
     plt.xlabel('Time')
     plt.ylabel('Value')
     plt.title(f'Cleaned Data Over Time for {file_basename}')
@@ -82,10 +85,10 @@ def isolation_forest_outlier_detection(filename, values, outliers_if_path, stead
     plt.close()
     return outliers_index
 
-
-# Example usage
-input_directory = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation/ft_03'
+#input_directory = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation/ft_03'
+input_directory = 'C:\DataRec\FT_03\Quinto_round'
 values = [3.2, 6.6, 2, 1, 0.5]
+k = 4
 
 # Create directories for saving outputs
 outliers_if_path = os.path.join(input_directory, 'Isolation Forest')
@@ -101,10 +104,10 @@ print(f'Number of CSV files found: {len(files)}')
 
 # Process the first file and get the combined outliers index
 first_filename = files[0]
-outliers_index = isolation_forest_outlier_detection(first_filename, values, outliers_if_path, steady_state_path, clean_data_path)
 
-# Apply the outliers index from the first file to all files in the "other variables" folder
-input_directory_1 = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation/ft_03/other variables'
+outliers_index = isolation_forest_outlier_detection(first_filename, values, outliers_if_path, steady_state_path, clean_data_path,k)#,merged_data_path)
+
+input_directory_1 = 'C:\DataRec\FT_03\Quinto_round\other_variables'
 other_files = sorted(glob.glob(input_directory_1 + '/*.csv'))
 
 clean_data_path_other = os.path.join(input_directory_1, 'clean data')
@@ -125,15 +128,5 @@ for filename in other_files:
     cleaned_data_filename_other = os.path.join(clean_data_path_other, f"{file_basename_other}_cleaned.csv")
     
     cleaned_df_other.to_csv(cleaned_data_filename_other, index=False)
-
-    # Plot the cleaned data for other variables
-    plt.figure(figsize=(24, 10))
-    plt.scatter(cleaned_df_other[df_other.columns[1]], cleaned_df_other[df_other.columns[2]], label='Cleaned Data', color='blue')
-    plt.xlabel('Time')
-    plt.ylabel('Value')
-    plt.title(f'Cleaned Data Over Time for {file_basename_other}')
-    plt.legend()
-    plt.savefig(os.path.join(clean_data_path_other, f"{file_basename_other}_cleaned_plot.png"))
-    plt.close()
 
 print("Cleaning completed for 'other variables' files.")

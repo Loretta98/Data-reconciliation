@@ -7,7 +7,7 @@ from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import os
 
-def knn_outlier_detection(input_path, window_sizes, values, merged_df_path):
+def knn_outlier_detection(input_path, window_sizes, values, merged_df_path,k):
     path = input_path
     outliers_knn_path = os.path.join(path, 'KNN')
     
@@ -24,7 +24,7 @@ def knn_outlier_detection(input_path, window_sizes, values, merged_df_path):
     # Load the merged_data file
     merged_df = pd.read_csv(merged_df_path)
     
-    for k, filename in enumerate(files):
+    for filename in files:
         print(f"Processing file: {filename}")
         file_basename = os.path.basename(filename).split('.')[0]
         
@@ -105,9 +105,10 @@ def knn_outlier_detection(input_path, window_sizes, values, merged_df_path):
     merged_df.to_csv(merged_df_path, index=False)
 
 # Example usage
-input_directory = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation'
+#input_directory = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation'
+input_directory = 'C:\DataRec\FT_06'
 merged_data_path = os.path.join(input_directory, 'merged_data', 'merged_data.csv')
 window_sizes = np.array([100, 300, 300, 300, 300])
 values = [3.2, 6.6, 2, 1, 0.5]
-
-knn_outlier_detection(input_directory, window_sizes, values, merged_data_path)
+k = 0
+knn_outlier_detection(input_directory, window_sizes, values, merged_data_path,k)

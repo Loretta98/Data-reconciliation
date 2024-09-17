@@ -47,6 +47,26 @@ def RelError(x,F1,F2,F4,F6,F7):
 
     return phi
 
+def Lagrangian(x, lambdas, F1, F2, F4, F6, F7):
+    # Reconciled values
+    F2r, F4r, F6r, F7r = x
+    λ1, λ2 = lambdas
+    
+    # Define the mass balance constraints
+    constraint1 = F4r + F6r + F7r - F2r - F1  # Should equal 0 for balance
+    constraint2 = F2r + F4r + F6r + F7r       # Another possible constraint, if applicable
+    
+    # Original objective function (sum of squared relative errors)
+    phi = ((F4r + F6r + F7r - F2r - F1)**2 / F1 + 
+           (F2r - F2)**2 / F2 + 
+           (F4r - F4)**2 / F4 + 
+           (F6r - F6)**2 / F6 + 
+           (F7r - F7)**2 / F7)
+    
+    # Lagrangian function: objective + sum(lambda * constraint)
+    lagrangian = phi + λ1 * constraint1 + λ2 * constraint2
+    
+    return lagrangian
 ################################################################################
 # Schema di processo : 1 + 2 -> 3 (Reformer)     3 -> 4 + 5 (Separazione H2O)         5 -> 7 + 6 (PSWA)       
 # 24.07, 48.71, 40.11, 8.516215893, 18.9501952 [kg/h] 
@@ -54,7 +74,9 @@ def RelError(x,F1,F2,F4,F6,F7):
 def MassReconciliation(y, Measured_values): 
     MW_gas = 0.6*(12+4) +0.4*(12+16*2)  #g/mol
     rho_w = 997/1000    #kg/lt
-    
+    CONVERSIONE = 0.044*MW_gas
+    print(CONVERSIONE)
+
     F1 = y[0]*0.044*MW_gas
     F2 = y[1]*rho_w
     F4 = y[2]*rho_w*60
@@ -88,8 +110,8 @@ def MassReconciliation(y, Measured_values):
     
     FirstGuess = Measured_values[1:] # F2r, F4r, F6r, F7r
     #print('First Guess');print(FirstGuess)
-    root = minimize(RelError, x0=FirstGuess, args=(F1,F2,F4,F6,F7), bounds= ((0,100),(0,100),(0,100),(0,100)))
-
+    #root = minimize(RelErr, x0=FirstGuess, args=(F1,F2,F4,F6,F7), bounds= ((0,100),(0,100),(0,100),(0,100)))
+    root = minimize(Lagrangian, x0=FirstGuess, args=(F1, F2, F4, F6, F7), bounds=[(0, None)] * len(FirstGuess))
     F2r = root.x[0]
     F4r = root.x[1]
     F6r = root.x[2]
@@ -105,4 +127,6 @@ def MassReconciliation(y, Measured_values):
     Eps = np.array([(F1-F1r)/F1r, (F2-F2r)/F2r , (F4-F4r)/F4r, (F6-F6r)/F6r, (F7-F7r)/F7r])*100
     #print(Eps)
     return Fr, Eps
+
+
 

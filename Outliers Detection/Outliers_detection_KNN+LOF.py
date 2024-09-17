@@ -74,7 +74,8 @@ def knn_nlof_outlier_detection(data, k, m):
     return outlier_indices, nlof_scores
 
 # Directory paths
-path = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation/ft_03'
+#path = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation/ft_03'
+path = 'C:\DataRec\FT_03'
 outliers_st_dev_path = os.path.join(path, 'KNN+LOF')
 os.makedirs(outliers_st_dev_path, exist_ok=True)
 

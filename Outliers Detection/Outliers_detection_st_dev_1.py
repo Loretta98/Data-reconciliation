@@ -12,7 +12,7 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 
-def highlight_outliers(input_path, n_steps, values, merged_df_path):
+def highlight_outliers(input_path, n_steps, values, merged_df_path,k):
     path = input_path
     outliers_st_dev_path = os.path.join(path, 'outliers_st_dev')
 
@@ -29,7 +29,7 @@ def highlight_outliers(input_path, n_steps, values, merged_df_path):
     # Load the merged_data file
     merged_df = pd.read_csv(merged_df_path)
 
-    for k, filename in enumerate(files):
+    for filename in files:
         print(f"Processing file: {filename}")
         
         # Read CSV file
@@ -45,7 +45,8 @@ def highlight_outliers(input_path, n_steps, values, merged_df_path):
             except ValueError as e:
                 print(f"Error converting column to float in file {filename}: {e}")
                 continue
-
+        
+        
         # Calculate allowable range
         if k == 0 or k == 1:
             allowable_range = np.ones(len(third_column)) * np.mean(third_column[3000:]) * values[k] / 100
@@ -111,10 +112,11 @@ def highlight_outliers(input_path, n_steps, values, merged_df_path):
     merged_df.to_csv(merged_df_path, index=False)
 
 # Example usage
-input_directory = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation'
+#input_directory = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation'
+input_directory = 'C:\DataRec\FT_06'
 merged_data_path = os.path.join(input_directory, 'merged_data', 'merged_data.csv')
 n_steps = np.array([20, 20, 20, 50, 50])  # Ensure n_steps is an integer
 values = [3.2, 6.6, 2, 1, 0.5]  # Measurement errors from provider, for each device
-
-highlight_outliers(input_directory, n_steps, values, merged_data_path)
+k = 0
+highlight_outliers(input_directory, n_steps, values, merged_data_path,k)
 
