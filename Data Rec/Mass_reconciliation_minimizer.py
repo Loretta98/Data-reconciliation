@@ -19,7 +19,7 @@ def AbsError(x,F1,F2,F4,F6,F7):
     F6r = x[2]
     F7r = x[3]
 
-    phi = (F4r+F6r+F7r-F2r - F1)**2 + (F2r - F2)**2  + (F4r - F4)**2 + (F6r - F6)**2/F6 + (F7r - F7)**2 
+    phi = abs(F4r+F6r+F7r-F2r - F1) + abs(F2r - F2)  + abs(F4r - F4)+ abs(F6r - F6) + abs(F7r - F7)
 
     return phi
 

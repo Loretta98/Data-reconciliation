@@ -57,3 +57,47 @@ def MassReconciliation_Projection(y, Measured_values, V, conversion_factor, Ay,A
 
     return Fr, Eps
       
+def MassReconciliation_Abs(y, Measured_values, V, conversion_factor, Ay, Az, G, Q1,R,P):
+    # Extract the variables and scale Measured_values by the conversion factors
+    y = np.array(y)*conversion_factor
+
+    # All variables are mass-based for the reconciliation
+    Measured_values = np.array(Measured_values) * conversion_factor
+    
+    # Step 1: Extract the diagonal elements
+    diag_V = np.diag(V)
+
+    # Step 2: Compute the element-wise reciprocal
+    inv_diag_V = 1 / diag_V
+
+    # Step 3: Create the new diagonal matrix with the reciprocals
+    inv_V = np.diag(inv_diag_V)
+
+    alpha =  1
+
+    # Step 2: Compute the matrix P*A*diag(1/V_i)*P*A^T
+    #PA = np.dot(P,Ay.T)                # Matrix multiplication P * A^T
+    PA_inv_V_PA_T = np.dot(G,np.dot(V,G.T))
+
+    # Step 3: Compute lambda
+    PA_y = np.dot(G,y)               # P * A * y
+    
+    #lambda_ = np.dot(np.linalg.inv(PA_inv_V_PA_T),PA_y)
+    lambda_ = np.dot(1/PA_inv_V_PA_T,PA_y)
+
+    # Step 4: Compute y^hat
+    y_hat = y - np.dot(V, np.dot(G.T,lambda_))
+
+    R1 = R[:-1,:]
+    term1 = np.linalg.inv(R1)
+    u_hat = - np.dot(term1, np.dot(Q1.T, np.dot(Ay,y_hat)))
+    
+    # Compute the residuals (for error analysis or constraints checking)
+    Fm = y_hat  # measured reconciled data
+    F1r = Fm[0]; F2r = Fm[1]; F4r = Fm[2]; F6r=Fm[3]; F7r=Fm[4]
+    Eps = y - y_hat  # Errors
+    Fu = u_hat 
+    Fr = np.array([F1r , F2r , Fu[0], F4r, Fu[1], F6r, F7r])
+
+    return Fr, Eps
+      

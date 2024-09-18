@@ -4,7 +4,7 @@ import glob
 import os 
 import pandas as pd
 import matplotlib.pyplot as plt
-from Data_Rec_Lin_lagrangian_copy import MassReconciliation_Projection
+from Data_Rec_Lin_lagrangian_copy import MassReconciliation_Projection, MassReconciliation_Abs
 import statistics
 from scipy.linalg import qr
 import seaborn as sns 
@@ -15,7 +15,7 @@ import scipy.stats as stats
 #path = 'C:/DataRec/Ordered CSV/Mass Reconciliation/DATA TO RECONCILE'
 path = 'C:\DataRec\To_reconcile'
 files = sorted(glob.glob(path + '/*.csv'))
-reconciled_data_path = os.path.join(path, 'clean_data_lagrangian')
+reconciled_data_path = os.path.join(path, 'clean_data_lagrangian_abs')
 
 # Ensure the directory for clean data exists
 os.makedirs(reconciled_data_path, exist_ok=True)
@@ -85,7 +85,9 @@ for t in range(len(time_values)):
     x0 = np.array([extracted_data[var][t] for var in x0_order])
     
     # Perform mass reconciliation for this time step
-    Fr, Eps = MassReconciliation_Projection(x0, x0,V,conversion_factor,Ay,Az,G,Q1,R)
+    #Fr, Eps = MassReconciliation_Projection(x0, x0,V,conversion_factor,Ay,Az,G,Q1,R)
+    Fr, Eps = MassReconciliation_Abs(x0, x0,V,conversion_factor,Ay,Az,G,Q1,R,P)
+
     # Store the reconciled values and errors for each variable
     for i, var in enumerate(y0_order):
         reconciled_values[var].append(Fr[i])
@@ -128,25 +130,58 @@ plt.title('Reconciled Data Over Time')
 plt.legend()
 plt.grid(True)
 
-# Plotting the errors
-plt.figure(figsize=(10, 6))
-for var in x0_order:
-    plt.plot(time_values, errors[var], label=f'Error {var}')
-plt.xlabel('Time')
-plt.ylabel('Error Values')
-plt.title('Error Data Over Time')
-plt.legend()
-plt.grid(True)
+# Example: Convert time_values to numeric (elapsed time in seconds or minutes)
+if isinstance(time_values[0], str):  # If time_values is a list of strings
+    time_values = pd.to_datetime(time_values,format='%d.%m.%Y %H:%M:%S', dayfirst=True)  # Convert to datetime objects
+    time_values_numeric = (time_values - time_values[0]).total_seconds()  # Convert to elapsed seconds
+
+# Set up a grid for subplots
+fig, axs = plt.subplots(len(error_df.columns)-1, 2, figsize=(14, 20))  # Two columns: one for error over time, another for normal distribution
+
+for i, var in enumerate(['Error F1', 'Error F2', 'Error F4', 'Error F6', 'Error F7']):
+    # Plot the error over time
+    axs[i, 0].plot(time_values, error_df[var], label=f'{var} over Time')
+    axs[i, 0].set_xlabel('Time')
+    axs[i, 0].set_ylabel('Error Value')
+    axs[i, 0].set_title(f'{var} Over Time')
+    axs[i, 0].legend()
+    axs[i, 0].grid(True)
+    
+    # Fit and plot the normal distribution of the errors
+    mean = np.mean(error_df[var])
+    std_dev = np.std(error_df[var])
+    normal_dist = stats.norm.pdf(time_values_numeric, mean, std_dev)
+    
+    axs[i, 1].plot(error_df[var], normal_dist, label=f'Normal Distribution of {var}')
+    axs[i, 1].set_xlabel('Error')
+    axs[i, 1].set_ylabel('Density')
+    axs[i, 1].set_title(f'Normal Distribution of {var}')
+    axs[i, 1].legend()
+    axs[i, 1].grid(True)
+
+# Adjust layout for better spacing
+plt.tight_layout()
 plt.show()
 
-# Plotting the normal distribution of errors
-plt.figure(figsize=(10, 6))
-for var in ['Error F1', 'Error F2', 'Error F4', 'Error F6', 'Error F7']:
-    sns.kdeplot(error_df[var], label=f'Normal Distribution of {var}')
+# # Plotting the errors
+# plt.figure(figsize=(10, 6))
+# for var in x0_order:
+#     plt.plot(time_values, errors[var], label=f'Error {var}')
+# plt.xlabel('Time')
+# plt.ylabel('Error Values')
+# plt.title('Error Data Over Time')
+# plt.legend()
+# plt.grid(True)
+# plt.show()
 
-plt.xlabel('Error Values')
-plt.ylabel('Density')
-plt.title('Normal Distribution of Errors')
-plt.legend()
-plt.grid(True)
-plt.show()
+# # Plotting the normal distribution of errors
+# plt.figure(figsize=(10, 6))
+# for var in ['Error F1', 'Error F2', 'Error F4', 'Error F6', 'Error F7']:
+#     sns.kdeplot(error_df[var], label=f'Normal Distribution of {var}')
+
+# plt.xlabel('Error Values')
+# plt.ylabel('Density')
+# plt.title('Normal Distribution of Errors')
+# plt.legend()
+# plt.grid(True)
+# plt.show()
