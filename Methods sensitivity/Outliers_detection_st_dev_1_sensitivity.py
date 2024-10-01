@@ -1,27 +1,21 @@
-################### Outliers detection through rolling standard deviation method ###################
-
 import pandas as pd
 import glob
 import numpy as np
 import os
 import matplotlib.pyplot as plt
 
-def highlight_outliers(input_path, n_steps_range, values, merged_df_path):
+def highlight_outliers(input_path, n_steps_range, values):
     path = input_path
     outliers_st_dev_path = os.path.join(path, 'ST.dev')
 
-    # Create the 'outliers_st_dev' directory if it does not exist
+    # Create the 'ST.dev' directory if it does not exist
     os.makedirs(outliers_st_dev_path, exist_ok=True)
 
     # List CSV files and sort them
     files = sorted(glob.glob(path + '/*.csv'))
-    # Print the number of files found
     print(f'Number of CSV files found: {len(files)}')
 
     results = []
-
-    # Load the merged_data file
-    merged_df = pd.read_csv(merged_df_path)
 
     for n_steps in n_steps_range:
         print(f"Processing n_steps: {n_steps}")
@@ -35,7 +29,7 @@ def highlight_outliers(input_path, n_steps_range, values, merged_df_path):
             # Extract the third column
             third_column = df.iloc[:, 2]
 
-            # Check the data type of third column
+            # Check and convert the data type of the third column if necessary
             if third_column.dtype == 'object':
                 try:
                     third_column = third_column.astype(float)
@@ -44,34 +38,44 @@ def highlight_outliers(input_path, n_steps_range, values, merged_df_path):
                     continue
 
             # Calculate allowable range
-            allowable_range = np.ones(len(third_column)) * np.mean(third_column[3000:]) * values / 100
+            allowable_range = np.ones(len(third_column)) * values / 100
 
             # Calculate rolling standard deviation
-            rolling_std = third_column.rolling(window=n_steps).std().shift(1)
+            rolling_std = third_column.rolling(window=n_steps).std()
+            rolling_std1 = third_column.rolling(window=10).std()
             
-            # Detect outliers based on the rolling standard deviation and allowable range
-            outlier_intervals = [i for i, std in enumerate(rolling_std) if std > 3 * allowable_range[i]]
-            
-            # Count the number of outliers
-            num_outliers = len(outlier_intervals)
+            # Identify steady states: rolling_std < allowable_range
+            df['steady_state'] = (rolling_std1 < allowable_range).astype(int)
+
+            # Detect outliers based on the rolling standard deviation exceeding 3 times the allowable range
+            df['anomaly'] = (rolling_std > 3 * allowable_range).astype(int)
+
+            # Identify real outliers: those that are outliers but not in steady state
+            df['real_outlier'] = df.apply(lambda row: 1 if row['anomaly'] == 1 and row['steady_state'] == 0 else 0, axis=1)
+
+            # Count real outliers and steady states marked as outliers
+            real_outliers_count = df['real_outlier'].sum()
+            steady_states_as_outliers_count = df[(df['anomaly'] == 1) & (df['steady_state'] == 1)].shape[0]
+
             results.append({
                 'Filename': os.path.basename(filename),
                 'n_steps': n_steps,
-                'Number of Outliers': num_outliers
+                'Number of Real Outliers': real_outliers_count,
+                'Steady States as Outliers': steady_states_as_outliers_count
             })
 
-            # Add outlier column to merged_data
-            file_basename = os.path.basename(filename).split('.')[0]
-            outlier_col_name = f"{file_basename}_STD_DEV_W{n_steps}"
-            merged_df[outlier_col_name] = 0
-            merged_df.loc[outlier_intervals, outlier_col_name] = 1
+            print(f"n_steps: {n_steps}")
+            print(f"Real Outliers: {real_outliers_count}, Steady States as Outliers: {steady_states_as_outliers_count}")
 
-            # Plot the original data with highlighted outliers
+            # Plot the original data with highlighted real outliers and steady states
             plt.figure(figsize=(20, 10))
             plt.scatter(third_column.index, third_column, label='Original Data', color='blue')
             
-            if outlier_intervals:  # Check if there are outliers to plot
-                plt.scatter(third_column.index[outlier_intervals], third_column[outlier_intervals], label='Outliers', color='red')
+            # Plot real outliers
+            plt.scatter(df.index[df['real_outlier'] == 1], third_column[df['real_outlier'] == 1], label='Real Outliers', color='red')
+            
+            # Plot steady states
+            plt.scatter(df.index[df['steady_state'] == 1], third_column[df['steady_state'] == 1], label='Steady States', color='green', alpha=0.5)
 
             plt.title(f'Rolling Std Dev outliers detection in {os.path.basename(filename)} (n_steps = {n_steps})')
             plt.xlabel('Index (Time)')
@@ -84,31 +88,15 @@ def highlight_outliers(input_path, n_steps_range, values, merged_df_path):
             plt.savefig(plot_path)
             plt.close()
 
-            # plt.figure(figsize=(24, 10))
-            # plt.plot(third_column.index, allowable_range, label='allowable')
-            # plt.plot(third_column.index, 3 * allowable_range, label='threshold')
-            # plt.plot(third_column.index, rolling_std, label='st_dev')
-            # plt.title(f"Allowable for {os.path.basename(filename)} (n_steps = {n_steps})")
-            # plt.legend()
-
-            # # Save the plot
-            # plot_path = os.path.join(outliers_st_dev_path, f"threshold_{os.path.basename(filename)}_n{n_steps}.png")
-            # plt.savefig(plot_path)
-            # plt.close()
-
     # Convert results list to DataFrame
     results_df = pd.DataFrame(results)
     
     # Save the results DataFrame to a CSV file
     results_df.to_csv(os.path.join(outliers_st_dev_path, 'outliers_summary_std.csv'), index=False)
 
-    # Save the merged data with outlier columns to a CSV file
-    merged_df.to_csv(merged_df_path, index=False)
-
 # Example usage
-input_directory = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation/ft_03'
-merged_data_path = os.path.join(input_directory, 'ST.dev', 'merged_data.csv')
+input_directory = 'C:\\DataRec\\FT_03'
 n_steps_range = np.arange(5, 51, 5)  # Range from 5 to 50 in steps of 5
 values = 2  # Single value since only one file is processed
 
-highlight_outliers(input_directory, n_steps_range, values, merged_data_path)
+highlight_outliers(input_directory, n_steps_range, values)

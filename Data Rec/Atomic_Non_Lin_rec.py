@@ -4,7 +4,7 @@ import glob
 import os 
 import pandas as pd
 import matplotlib.pyplot as plt
-from Data_Rec_Lin_lagrangian import MassReconciliation_Projection, MassReconciliation_Abs, FullReconciliation_Projection
+from Data_Rec_Lin_lagrangian import MassReconciliation_Projection, MassReconciliation_Abs
 import statistics
 from scipy.linalg import qr
 import seaborn as sns 
@@ -15,17 +15,68 @@ import scipy.stats as stats
 #path = 'C:/DataRec/Ordered CSV/Mass Reconciliation/DATA TO RECONCILE'
 path = 'C:\DataRec\To_reconcile'
 files = sorted(glob.glob(path + '/*.csv'))
-reconciled_data_path = os.path.join(path, 'clean_data_lagrangian_abs')
+reconciled_data_path = os.path.join(path, 'fully_reconciled')
 
 # Ensure the directory for clean data exists
 os.makedirs(reconciled_data_path, exist_ok=True)
 
+# Define paths where your CSV files are located
+flowrate_path = 'C:/DataRec/To_reconcile'
+composition_path = 'C:/DataRec/To_reconcile/GC_filtered'
+flowrate_files = sorted(glob.glob(flowrate_path + '/*.csv'))
+composition_files = sorted(glob.glob(composition_path + '/*.csv'))
+
 # Covariance Matrix V according to Narasimhan et al.: diagonal elements = variance, non diagonal = null 
 V = np.zeros([5,5])
+# Covariance Matrixes of measurements over CH4, CO2, CO, H2, H2O 
+Wc = np.zeros([5,5])
+Wh = np.zeros([5,5])
+Wo = np.zeros([5,5])
+# Mapping of variables to filenames 
+# Select relevant columns
+compounds = ['Injection Time', 'H2 (A) [%]', 'O2 (A) [%Vol]', 'N2 (A) [%Vol]', 'CH4 (A) [%Vol]', 'CO (A) [%]', 'CO2 (B) [%Vol]', 'CH3OH (B) [%]','H2O [%Vol]']
+
+# Initialize dictionaries to hold Nc, Nh, and No data for each stream
+Nc_dict = {}
+Nh_dict = {}
+No_dict = {}
+
+# Contribution factors per molecule
+nC_CH4 = 1
+nC_CO = 1
+nC_CO2 = 1
+nC_CH3OH = 1
+
+nH_CH4 = 4
+nH_H2 = 2
+nH_CH3OH = 4
+nH_H2O = 2
+
+nO_O2 = 2
+nO_CO = 1
+nO_CO2 = 2
+nO_CH3OH = 1
+nO_H2O = 1
+
+# Molar masses of the compounds (g/mol)
+molar_masses = {
+    'CH4': 16.04,     # g/mol
+    'CO': 28.01,      # g/mol
+    'CO2': 44.01,     # g/mol
+    'CH3OH': 32.04,   # g/mol
+    'H2': 2.016,      # g/mol
+    'O2': 32.00,      # g/mol
+    'H2O': 18.01528   # g/mol
+}
+
+# Attempt in order to reconcile over the atomic balance (linear problem), otherwise I would need the pswa and condenser model (could I consider them?)
+# I can generate the "measured data" for the atomic balance, mantaining the error, so to find the standard deviation. In order to reconcile in a non linear matter I need to consider also the reactor model. 
 
 # Mapping of variables to filenames
 variable_order = ['F1', 'F2', 'F4', 'F6', 'F7']
 variable_to_file = dict(zip(variable_order, files))
+flowrate_files_dict = dict(zip(variable_order, flowrate_files))
+composition_files_dict = dict(zip(compounds, composition_files))
 
 # Initialize lists to hold the extracted data for each variable
 extracted_data = {var: [] for var in variable_order}
@@ -33,6 +84,7 @@ time_values = None  # Assuming all files have the same time column
 
 # Extract the second column for each variable and store it
 for i, (var, filename) in enumerate(variable_to_file.items()):
+    print('Variable', var)
     # Read the CSV file
     df = pd.read_csv(filename)
     
@@ -46,7 +98,7 @@ for i, (var, filename) in enumerate(variable_to_file.items()):
     # Update the diagonal of the covariance matrix with the variance
     V[i, i] = np.var(extracted_data[var])  # Variance for variable var
 
-#print(V)
+
 
 # Reorder the extracted data according to x0 = F1, F2, F4, F6, F7
 x0_order = ['F1', 'F2', 'F4', 'F6', 'F7']
