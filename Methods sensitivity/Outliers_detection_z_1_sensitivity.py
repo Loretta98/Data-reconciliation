@@ -13,9 +13,8 @@ def highlight_outliers(input_file, n_steps_range, z_threshold_range, values):
     files = sorted(glob.glob(path + '/*.csv'))
     print(f'Number of CSV files found: {len(files)}')
     
-    for file in files: # Read CSV file (only one file now)
+    for file in files: # Read CSV file
         df = pd.read_csv(open(file, 'rb'))
-        #df = pd.read_csv(files[0])
 
         # Extract the third column for analysis
         third_column = df.iloc[:, 2]
@@ -27,8 +26,8 @@ def highlight_outliers(input_file, n_steps_range, z_threshold_range, values):
         window_size = 10  # Set window size for steady states calculation
         rolling_std = third_column.rolling(window=window_size).std()
         
-        # Define allowable range for steady states based on some threshold
-        allowable_range = np.ones(len(rolling_std)) * values/100
+        # Define allowable range for steady states based on the threshold
+        allowable_range = np.ones(len(rolling_std)) * values
         df['steady_state'] = (rolling_std < allowable_range).astype(int)
 
         # Iterate over n_steps and z_threshold to detect outliers and compare with steady states
@@ -43,14 +42,16 @@ def highlight_outliers(input_file, n_steps_range, z_threshold_range, values):
                 outlier_intervals = [i for i, z in enumerate(z_scores) if abs(z) > z_threshold]
 
                 # Compare with steady states to identify real outliers
-                df['real_outlier'] = 0
+                df['real_outlier'] = 0  # Correct column name
+                
                 for outlier_index in outlier_intervals:
+                    # Check if it's not part of a steady state
                     if df['steady_state'].iloc[outlier_index] == 0:
-                        df.loc[outlier_index, 'real outlier'] = 1
+                        df.loc[outlier_index, 'real_outlier'] = 1
 
                 # Count the number of real outliers
                 num_real_outliers = df['real_outlier'].sum()
-                print('outliers found:', num_real_outliers)
+                print(f'Outliers found: {num_real_outliers}')
 
                 # Store the result in the results matrix
                 results_matrix.at[n_steps, f'Z_{z_threshold:.1f}'] = num_real_outliers
@@ -69,7 +70,7 @@ def zscore(x, window):
     return z
 
 # Example usage
-input_path = 'C:\DataRec\FT_03'
+input_path = 'C:/DataRec/FT_03'
 n_steps_range = range(10, 1001, 20)  # Vary n_steps from 10 to 1000 in steps of 20
 z_threshold_range = np.arange(0.0, 3.5, 0.5)  # Range from 0 to 3.5 in steps of 0.5
 values = 2

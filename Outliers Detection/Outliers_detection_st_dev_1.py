@@ -65,7 +65,7 @@ def highlight_outliers(input_path, n_steps, values, merged_df_path,k):
             'Filename': os.path.basename(filename),
             'Number of Outliers': num_outliers
         })
-
+        print(results)
         # Add outlier column to merged_data
         file_basename = os.path.basename(filename).split('.')[0]
         outlier_col_name = f"{file_basename}_STD_DEV"
@@ -113,10 +113,10 @@ def highlight_outliers(input_path, n_steps, values, merged_df_path,k):
 
 # Example usage
 #input_directory = 'C:/Users/lsalano/OneDrive - Politecnico di Milano/Desktop/FAT/Riconciliazione dati/PLC/Maggio 2024/31 Maggio 2024/Ordered CSV/Mass Reconciliation'
-input_directory = 'C:\DataRec\FT_06'
+input_directory = 'C:\DataRec\FT_03'
 merged_data_path = os.path.join(input_directory, 'merged_data', 'merged_data.csv')
 n_steps = np.array([20, 20, 20, 50, 50])  # Ensure n_steps is an integer
 values = [3.2, 6.6, 2, 1, 0.5]  # Measurement errors from provider, for each device
-k = 0
+k = 2
 highlight_outliers(input_directory, n_steps, values, merged_data_path,k)
 

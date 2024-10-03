@@ -38,17 +38,30 @@ def highlight_outliers(input_path, n_steps_range, values):
                     continue
 
             # Calculate allowable range
-            allowable_range = np.ones(len(third_column)) * values / 100
+            allowable_range = np.ones(len(third_column)) * values
 
             # Calculate rolling standard deviation
-            rolling_std = third_column.rolling(window=n_steps).std()
+            rolling_std = third_column.rolling(window=n_steps).std().shift(1)
             rolling_std1 = third_column.rolling(window=10).std()
             
             # Identify steady states: rolling_std < allowable_range
             df['steady_state'] = (rolling_std1 < allowable_range).astype(int)
 
             # Detect outliers based on the rolling standard deviation exceeding 3 times the allowable range
-            df['anomaly'] = (rolling_std > 3 * allowable_range).astype(int)
+            df['anomaly'] = ((rolling_std > 3 * allowable_range) & ~rolling_std.isna()).astype(int)
+
+            # Find the outlier intervals using the DataFrame approach
+            #outlier_intervals = df.index[df['anomaly'] == 1].tolist()
+            outlier_intervals = [i for i, std in enumerate(rolling_std) if std > 3 * allowable_range[i]]
+            # Compare: count based on `outlier_intervals`
+            num_outliers_from_intervals = len(outlier_intervals)
+
+            # Direct calculation method for verification
+            num_outliers_direct = (rolling_std > 3 * allowable_range).sum()
+
+            # Print counts to compare
+            print(f"Outliers (interval-based method): {num_outliers_from_intervals}")
+            print(f"Outliers (direct method): {num_outliers_direct}")
 
             # Identify real outliers: those that are outliers but not in steady state
             df['real_outlier'] = df.apply(lambda row: 1 if row['anomaly'] == 1 and row['steady_state'] == 0 else 0, axis=1)
@@ -96,7 +109,7 @@ def highlight_outliers(input_path, n_steps_range, values):
 
 # Example usage
 input_directory = 'C:\\DataRec\\FT_03'
-n_steps_range = np.arange(5, 51, 5)  # Range from 5 to 50 in steps of 5
+n_steps_range = np.arange(5, 1001, 5)  # Range from 5 to 50 in steps of 5
 values = 2  # Single value since only one file is processed
 
 highlight_outliers(input_directory, n_steps_range, values)
