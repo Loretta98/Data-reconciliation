@@ -4,7 +4,7 @@ import glob
 import os 
 import pandas as pd
 import matplotlib.pyplot as plt
-from Data_Rec_Lin_lagrangian import MassReconciliation_Projection, MassReconciliation_Abs, FullReconciliation_Projection
+from Data_Rec_Lin_lagrangian import MassReconciliation_Projection, MassReconciliation_Abs
 import statistics
 from scipy.linalg import qr
 import seaborn as sns 
@@ -13,7 +13,7 @@ import scipy.stats as stats
 
 # Define the path where your CSV files are located
 #path = 'C:/DataRec/Ordered CSV/Mass Reconciliation/DATA TO RECONCILE'
-path = 'C:\DataRec\To_reconcile'
+path = r'C:\DataRec\To_reconcile\fortyfive'
 files = sorted(glob.glob(path + '/*.csv'))
 reconciled_data_path = os.path.join(path, 'clean_data_lagrangian_abs')
 
@@ -22,7 +22,7 @@ os.makedirs(reconciled_data_path, exist_ok=True)
 
 # Covariance Matrix V according to Narasimhan et al.: diagonal elements = variance, non diagonal = null 
 V = np.zeros([5,5])
-
+#V = np.identity(5)
 # Mapping of variables to filenames
 variable_order = ['F1', 'F2', 'F4', 'F6', 'F7']
 variable_to_file = dict(zip(variable_order, files))
@@ -44,9 +44,11 @@ for i, (var, filename) in enumerate(variable_to_file.items()):
     extracted_data[var] = df.iloc[:, 1].values
     
     # Update the diagonal of the covariance matrix with the variance
-    V[i, i] = np.var(extracted_data[var])  # Variance for variable var
+    V[i, i] = 1/np.var(extracted_data[var])  # Variance for variable var
+    #V[i, i] = np.std(extracted_data[var])  # Variance for variable var
 
-#print(V)
+V[1,1] = V[0,0] 
+print(V)
 
 # Reorder the extracted data according to x0 = F1, F2, F4, F6, F7
 x0_order = ['F1', 'F2', 'F4', 'F6', 'F7']
@@ -85,8 +87,8 @@ for t in range(len(time_values)):
     x0 = np.array([extracted_data[var][t] for var in x0_order])
     
     # Perform mass reconciliation for this time step
-    #Fr, Eps = MassReconciliation_Projection(x0, x0,V,conversion_factor,Ay,Az,G,Q1,R)
-    Fr, Eps = MassReconciliation_Abs(x0, x0,V,conversion_factor,Ay,Az,G,Q1,R,P)
+    Fr, Eps = MassReconciliation_Projection(x0, x0,V,conversion_factor,Ay,Az,G,Q1,R)
+    #Fr, Eps = MassReconciliation_Abs(x0, x0,V,conversion_factor,Ay,Az,G,Q1,R,P)
 
     # Store the reconciled values and errors for each variable
     for i, var in enumerate(y0_order):
@@ -132,34 +134,41 @@ plt.grid(True)
 
 # Example: Convert time_values to numeric (elapsed time in seconds or minutes)
 if isinstance(time_values[0], str):  # If time_values is a list of strings
-    time_values = pd.to_datetime(time_values,format='%d.%m.%Y %H:%M:%S', dayfirst=True)  # Convert to datetime objects
+    #time_values = pd.to_datetime(time_values,format='%d.%m.%Y %H:%M:%S', dayfirst=True)  # Convert to datetime objects
+    time_values = pd.to_datetime(time_values, format='%Y-%m-%d %H:%M:%S', dayfirst=False)
     time_values_numeric = (time_values - time_values[0]).total_seconds()  # Convert to elapsed seconds
 
 # Set up a grid for subplots
-fig, axs = plt.subplots(len(error_df.columns)-1, 2, figsize=(14, 20))  # Two columns: one for error over time, another for normal distribution
+fig, axs = plt.subplots(len(error_df.columns)-1, 1, figsize=(14, 20))  # Two columns: one for error over time, another for normal distribution
 
 for i, var in enumerate(['Error F1', 'Error F2', 'Error F4', 'Error F6', 'Error F7']):
     # Plot the error over time
-    axs[i, 0].plot(time_values, error_df[var], label=f'{var} over Time')
-    axs[i, 0].set_xlabel('Time')
-    axs[i, 0].set_ylabel('Error Value')
-    axs[i, 0].set_title(f'{var} Over Time')
-    axs[i, 0].legend()
-    axs[i, 0].grid(True)
+    axs[i].plot(time_values, error_df[var], label=f'{var} over Time')
+    axs[i].set_xlabel('Time')
+    axs[i].set_ylabel('Error Value')
+    axs[i].set_title(f'{var} Over Time')
+    axs[i].legend()
+    axs[i].grid(True)
     
-    # Fit and plot the normal distribution of the errors
-    mean = np.mean(error_df[var])
-    std_dev = np.std(error_df[var])
-    normal_dist = stats.norm.pdf(time_values_numeric, mean, std_dev)
+    # # Fit and plot the normal distribution of the errors
+    # mean = np.mean(error_df[var])
+    # std_dev = np.std(error_df[var])
+    # normal_dist = stats.norm.pdf(time_values_numeric, mean, std_dev)
     
-    axs[i, 1].plot(error_df[var], normal_dist, label=f'Normal Distribution of {var}')
-    axs[i, 1].set_xlabel('Error')
-    axs[i, 1].set_ylabel('Density')
-    axs[i, 1].set_title(f'Normal Distribution of {var}')
-    axs[i, 1].legend()
-    axs[i, 1].grid(True)
+    # axs[i, 1].plot(error_df[var], normal_dist, label=f'Normal Distribution of {var}')
+    # axs[i, 1].set_xlabel('Error')
+    # axs[i, 1].set_ylabel('Density')
+    # axs[i, 1].set_title(f'Normal Distribution of {var}')
+    # axs[i, 1].legend()
+    # axs[i, 1].grid(True)
 
 # Adjust layout for better spacing
+# plt.figure()
+# ORDER = ['F1','F2']
+# for var in ORDER:
+#     plt.plot(time_values, reconciled_values[var], label=f'Reconciled {var}')
+# plt.plot(time_values, reconciled_values['F2']/reconciled_values['F1'])
+
 plt.tight_layout()
 plt.show()
 

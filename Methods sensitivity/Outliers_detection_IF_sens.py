@@ -84,7 +84,7 @@ def isolation_forest_outlier_detection(input_path, values, contamination_list, r
 
 # Example usage
 input_directory = 'C:/DataRec/FT_03'
-values = 2
+values = 2 
 contamination_list = np.arange(0.01, 0.51, 0.01) # should be between zero and 0.5
 
 random_states_list = 42
