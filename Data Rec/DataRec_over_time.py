@@ -30,7 +30,7 @@ variable_to_file = dict(zip(variable_order, files))
 # Initialize lists to hold the extracted data for each variable
 extracted_data = {var: [] for var in variable_order}
 time_values = None  # Assuming all files have the same time column
-
+std = np.zeros(5)
 # Extract the second column for each variable and store it
 for i, (var, filename) in enumerate(variable_to_file.items()):
     # Read the CSV file
@@ -42,7 +42,8 @@ for i, (var, filename) in enumerate(variable_to_file.items()):
     
     # Extract the second column (values to reconcile)
     extracted_data[var] = df.iloc[:, 1].values
-    
+    std[i] = np.std(extracted_data[var])
+    print(std)
     # Update the diagonal of the covariance matrix with the variance
     V[i, i] = 1/np.var(extracted_data[var])  # Variance for variable var
     #V[i, i] = np.std(extracted_data[var])  # Variance for variable var
